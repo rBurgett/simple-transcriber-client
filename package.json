@@ -1,0 +1,55 @@
+{
+  "name": "simple-transcriber-client",
+  "version": "0.1.0",
+  "description": "simple-transcriber-client",
+  "main": "index.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "build": "babel src --out-dir dist --progress",
+    "watch": "babel src --out-dir dist --watch --progress",
+    "scss": "npm run css-compile && npm run css-prefix && npm run css-minify",
+    "css-compile": "node-sass --output-style expanded --source-map true --source-map-contents true --precision 6 scss/main.scss public/css/main.css",
+    "css-prefix": "postcss --replace \"public/css/main.css\"",
+    "css-minify": "cleancss --level 1 --source-map --source-map-inline-sources --output public/css/main.min.css public/css/main.css",
+    "watch-scss": "nodemon -w scss -e scss -x \"npm run scss\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rBurgett/simple-transcriber-client.git"
+  },
+  "author": "Ryan Burgett <ryan@burgettdev.net>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/rBurgett/simple-transcriber-client/issues"
+  },
+  "homepage": "https://github.com/rBurgett/simple-transcriber-client#readme",
+  "devDependencies": {
+    "@babel/cli": "^7.4.4",
+    "@babel/core": "^7.4.5",
+    "@babel/plugin-proposal-class-properties": "^7.4.4",
+    "@babel/plugin-proposal-object-rest-spread": "^7.4.4",
+    "babel-eslint": "^10.0.2",
+    "babel-preset-react-app": "^9.0.0",
+    "bootstrap": "^4.3.1",
+    "clean-css-cli": "^4.3.0",
+    "electron": "^5.0.6",
+    "eslint": "^6.0.1",
+    "eslint-plugin-babel": "^5.3.0",
+    "eslint-plugin-react": "^7.14.2",
+    "jquery": "^3.4.1",
+    "less-plugin-autoprefixer": "^2.1.0",
+    "node-sass": "^4.12.0",
+    "nodemon": "^1.19.1",
+    "postcss-cli": "^6.1.2"
+  },
+  "dependencies": {
+    "electron-context-menu": "^0.13.0",
+    "electron-is-dev": "^1.1.0",
+    "electron-updater": "^4.0.14",
+    "fs-extra-promise": "^1.0.1",
+    "prop-types": "^15.7.2",
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6"
+  }
+}
