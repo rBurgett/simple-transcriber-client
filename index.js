@@ -5,20 +5,23 @@ const path = require('path');
 // const { autoUpdater } = require('electron-updater');
 
 const { platform } = process;
-
 require('electron-context-menu')();
 
 app.on('ready', () => {
+
   const appWindow = new BrowserWindow({
     show: false,
-    width: 400,
-    height: platform === 'win32' ? 420 : platform === 'darwin' ? 400 : 380,
+    width: 800,
+    height: platform === 'win32' ? 620 : platform === 'darwin' ? 600 : 580,
     webPreferences: {
       nodeIntegration: true
     }
   });
 
+  appWindow.toggleDevTools();
+
   appWindow.once('ready-to-show', () => {
+    require('electron-context-menu')();
     appWindow.show();
   });
 
