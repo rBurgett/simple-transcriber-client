@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import { createStore, combineReducers } from 'redux';
 import { Provider } from 'react-redux';
 import swal from 'sweetalert';
+import uuid from 'uuid';
 import appReducer from './reducers/app-reducer';
 import * as appActions from './actions/app-actions';
 import Transcription from './types/transcription';
@@ -50,6 +51,7 @@ setTimeout(() => {
     const date = new Date().toISOString();
     const idx = getRandomIndex(splitText.length);
     data.push(new Transcription({
+      _id: uuid.v4(),
       createdAt: date,
       title: splitText.slice(idx, idx + 4).join(' '),
       text,

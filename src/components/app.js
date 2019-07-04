@@ -1,10 +1,10 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
-import Transcription from '../types/transcription';
 import { activeTabs } from '../constants/';
 import * as actions from '../actions/app-actions';
 import New from './new';
+import Transcriptions from './transcriptions';
 import Settings from './settings';
 
 const App = ({ activeTab, windowWidth, windowHeight, setActiveTab }) => {
@@ -57,7 +57,7 @@ const App = ({ activeTab, windowWidth, windowHeight, setActiveTab }) => {
           <New />
           :
           activeTab === activeTabs.TRANSCRIPTIONS ?
-            <div></div>
+            <Transcriptions />
             :
             <Settings />
         }
@@ -69,15 +69,13 @@ App.propTypes = {
   activeTab: PropTypes.string,
   windowWidth: PropTypes.number,
   windowHeight: PropTypes.number,
-  transcriptions: PropTypes.arrayOf(PropTypes.instanceOf(Transcription)),
   setActiveTab: PropTypes.func
 };
 export default connect(
   ({ appState }) => ({
     activeTab: appState.activeTab,
     windowWidth: appState.windowWidth,
-    windowHeight: appState.windowHeight,
-    transcriptions: appState.transcriptions
+    windowHeight: appState.windowHeight
   }),
   dispatch => ({
     setActiveTab: activeTab => dispatch(actions.setActiveTab(activeTab))

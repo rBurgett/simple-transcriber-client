@@ -1,5 +1,6 @@
 export default class Transcription {
 
+  _id = '';
   createdAt = '';
   title = '';
   text = '';
@@ -8,6 +9,7 @@ export default class Transcription {
   postDate = '';
 
   constructor(data) {
+    this._id = data._id || this._id;
     this.createdAt = data.createdAt || this.createdAt;
     this.title = data.title || this.title;
     this.text = data.text || this.text;

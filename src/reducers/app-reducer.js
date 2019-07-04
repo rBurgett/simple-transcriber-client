@@ -25,7 +25,7 @@ export default (state = getInitialState(), { type, payload }) => {
     case actions.SET_TRANSCRIPTIONS:
       return {
         ...state,
-        transcriptions: payload.transcriptions
+        transcriptions: [...payload.transcriptions].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
       };
     case actions.SET_ACCESS_KEY_ID:
       localStorage.setItem(localStorageKeys.ACCESS_KEY_ID, payload.accessKeyId);
