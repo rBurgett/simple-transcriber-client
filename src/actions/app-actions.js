@@ -9,3 +9,8 @@ export const setTranscriptions = transcriptions => ({
   type: actions.SET_TRANSCRIPTIONS,
   payload: { transcriptions }
 });
+
+export const setActiveTab = activeTab => ({
+  type: actions.SET_ACTIVE_TAB,
+  payload: { activeTab }
+});
