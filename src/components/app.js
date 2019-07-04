@@ -5,6 +5,7 @@ import Transcription from '../types/transcription';
 import { activeTabs } from '../constants/';
 import * as actions from '../actions/app-actions';
 import New from './new';
+import Settings from './settings';
 
 const App = ({ activeTab, windowWidth, windowHeight, setActiveTab }) => {
 
@@ -55,7 +56,10 @@ const App = ({ activeTab, windowWidth, windowHeight, setActiveTab }) => {
         {activeTab === activeTabs.NEW ?
           <New />
           :
-          <div></div>
+          activeTab === activeTabs.TRANSCRIPTIONS ?
+            <div></div>
+            :
+            <Settings />
         }
       </div>
     </div>

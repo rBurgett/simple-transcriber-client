@@ -14,3 +14,13 @@ export const setActiveTab = activeTab => ({
   type: actions.SET_ACTIVE_TAB,
   payload: { activeTab }
 });
+
+export const setAccessKeyId = accessKeyId => ({
+  type: actions.SET_ACCESS_KEY_ID,
+  payload: { accessKeyId }
+});
+
+export const setSecretAccessKey = secretAccessKey => ({
+  type: actions.SET_SECRET_ACCESS_KEY,
+  payload: { secretAccessKey }
+});

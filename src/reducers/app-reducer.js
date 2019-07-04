@@ -1,10 +1,12 @@
-import { actions, activeTabs } from '../constants';
+import { actions, activeTabs, localStorageKeys } from '../constants';
 
 const getInitialState = () => ({
   activeTab: activeTabs.NEW,
   windowWidth: window.innerWidth,
   windowHeight: window.innerHeight,
-  transcriptions: []
+  transcriptions: [],
+  accessKeyId: localStorage.getItem(localStorageKeys.ACCESS_KEY_ID) || '',
+  secretAccessKey: localStorage.getItem(localStorageKeys.SECRET_ACCESS_KEY) || ''
 });
 
 export default (state = getInitialState(), { type, payload }) => {
@@ -24,6 +26,18 @@ export default (state = getInitialState(), { type, payload }) => {
       return {
         ...state,
         transcriptions: payload.transcriptions
+      };
+    case actions.SET_ACCESS_KEY_ID:
+      localStorage.setItem(localStorageKeys.ACCESS_KEY_ID, payload.accessKeyId);
+      return {
+        ...state,
+        accessKeyId: payload.accessKeyId
+      };
+    case actions.SET_SECRET_ACCESS_KEY:
+      localStorage.setItem(localStorageKeys.SECRET_ACCESS_KEY, payload.secretAccessKey);
+      return {
+        ...state,
+        secretAccessKey: payload.secretAccessKey
       };
     default:
       return state;
