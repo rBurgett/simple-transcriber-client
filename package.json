@@ -6,8 +6,8 @@
   "private": true,
   "scripts": {
     "start": "electron .",
-    "build": "babel src --out-dir dist",
-    "watch": "babel src --out-dir dist --watch",
+    "build": "babel src --out-dir dist --verbose",
+    "watch": "babel src --out-dir dist --watch --verbose",
     "scss": "npm run css-compile && npm run css-prefix && npm run css-minify",
     "css-compile": "node-sass --output-style expanded --source-map true --source-map-contents true --precision 6 scss/main.scss public/css/main.css",
     "css-prefix": "postcss --replace \"public/css/main.css\"",
