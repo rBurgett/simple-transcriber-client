@@ -13,6 +13,7 @@ export const activeTabs = {
 };
 
 export const localStorageKeys = {
+  TEMP_OBJ: 'TEMP_OBJ',
   ACCESS_KEY_ID: 'ACCESS_KEY_ID',
   SECRET_ACCESS_KEY: 'SECRET_ACCESS_KEY'
 };

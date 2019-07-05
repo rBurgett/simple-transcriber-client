@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title></title>
+  <link rel="shortcut icon" href="./images/favicon.ico"  />
+  <link href="./css/main.min.css" rel="stylesheet">
+
+  <style>
+    button {
+      min-width: 100px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="js-container" style="display:none;padding: 8px 16px 8px 16px;">
+  <div>
+    <button id="js-save" class="btn btn-outline-primary btn-sm float-right"><i class="fas fa-file-download"></i> Save</button>
+    <button id="js-copy" class="btn btn-outline-primary btn-sm float-right" style="margin-right:8px;"><i class="fas fa-copy"></i> Copy</button>
+    <h4 id="js-title"></h4>
+    <div id="js-main"></div>
+  </div>
+</div>
+
+<script type="text/javascript">
+
+  const electron = require('electron');
+  const $ = require('jquery');
+  const { localStorageKeys } = require('../dist/constants');
+  const Transcription = require('../dist/types/transcription').default;
+
+  const temp = JSON.parse(localStorage.getItem(localStorageKeys.TEMP_OBJ));
+  const transcription = new Transcription(temp.transcriptionObj);
+  const { title, text } = transcription;
+  document.title = title;
+  $('#js-title').text(title);
+  $('#js-main').text(text);
+  $('#js-container').css('display', 'block');
+
+  $('#js-copy').on('click', e => {
+    e.preventDefault();
+    transcription.copyTextToClipboard();
+  });
+
+  $('#js-save').on('click', e => {
+    e.preventDefault();
+    transcription.saveTextToFile();
+  });
+
+</script>
+</body>
+</html>

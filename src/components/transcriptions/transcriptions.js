@@ -1,8 +1,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
-import { shell } from 'electron';
+import { shell, clipboard, remote } from 'electron';
+import swal from 'sweetalert';
+import fs from 'fs-extra-promise';
 import Transcription from '../../types/transcription';
+
+const { dialog, BrowserWindow } = remote;
+
 
 const Transcriptions = ({ transcriptions, windowHeight }) => {
 
@@ -27,6 +32,24 @@ const Transcriptions = ({ transcriptions, windowHeight }) => {
     shell.openExternal(link);
   };
 
+  const onCopyClick =  (e, _id) => {
+    e.preventDefault();
+    const transcription = transcriptions.find(t => t._id === _id);
+    transcription.copyTextToClipboard();
+  };
+
+  const onSaveClick = (e, _id) => {
+    e.preventDefault();
+    const transcription = transcriptions.find(t => t._id === _id);
+    transcription.saveTextToFile();
+  };
+
+  const onViewClick = (e, _id) => {
+    e.preventDefault();
+    const transcription = transcriptions.find(t => t._id === _id);
+    transcription.openTranscriptionTextWindow();
+  };
+
   return (
     <div style={styles.container}>
       <div style={styles.tableContainer} className={'table-responsive'}>
@@ -47,9 +70,9 @@ const Transcriptions = ({ transcriptions, windowHeight }) => {
                 <tr key={t._id}>
                   <td>{moment(t.createdAt).format('YYYY-MM-DD')}</td>
                   <td>{t.title}</td>
-                  <td className={'text-center'}><a href={'#'} onClick={e => onLinkClick(e, t.audioUrl)} title={'Open MP3 link'}><i className={'fas fa-external-link-alt'} /></a></td>
-                  <td className={'text-center'}><a href={'#'} onClick={e => onLinkClick(e, t.postUrl)} title={'Open post link'}><i className={'fas fa-external-link-alt'} /></a></td>
-                  <td className={'text-center'}><a href={'#'} style={styles.viewLink} title={'View transcription text'}><i className={'fas fa-search'} /></a><a href={'#'} style={styles.viewLink} title={'Copy transcription text'}><i className={'fas fa-copy'} /></a><a href={'#'} title={'Save transcription text'}><i className={'fas fa-file-download'} /></a></td>
+                  {t.audioUrl ? <td className={'text-center'}><a href={'#'} onClick={e => onLinkClick(e, t.audioUrl)} title={'Open MP3 link'}><i className={'fas fa-external-link-alt'} /></a></td> : <td>N/A</td>}
+                  {t.postUrl ? <td className={'text-center'}><a href={'#'} onClick={e => onLinkClick(e, t.postUrl)} title={'Open post link'}><i className={'fas fa-external-link-alt'} /></a></td> : <td>N/A</td>}
+                  <td className={'text-center'}><a href={'#'} style={styles.viewLink} title={'View transcription text'} onClick={e => onViewClick(e, t._id)}><i className={'fas fa-search'} /></a><a href={'#'} style={styles.viewLink} title={'Copy transcription text'} onClick={e => onCopyClick(e, t._id)}><i className={'fas fa-copy'} /></a><a href={'#'} title={'Save transcription text'} onClick={e => onSaveClick(e, t._id)}><i className={'fas fa-file-download'} /></a></td>
                 </tr>
               );
             })

@@ -49,6 +49,8 @@
   },
   "dependencies": {
     "@babel/polyfill": "^7.4.4",
+    "aws-sdk": "^2.488.0",
+    "dynogels-promisified": "^1.0.4",
     "electron-is-dev": "^1.1.0",
     "electron-updater": "^4.0.14",
     "fs-extra-promise": "^1.0.1",

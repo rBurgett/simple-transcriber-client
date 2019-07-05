@@ -8,6 +8,9 @@ import appReducer from './reducers/app-reducer';
 import * as appActions from './actions/app-actions';
 import Transcription from './types/transcription';
 import App from './components/app';
+import { localStorageKeys } from './constants';
+
+localStorage.setItem(localStorageKeys.TEMP_OBJ, JSON.stringify({}));
 
 window.handleError = err => {
   console.error(err);
@@ -47,7 +50,7 @@ setTimeout(() => {
     .filter(w => !/\W/.test(w))
     .reduce((arr, w) => arr.includes(w) ? arr : [...arr, w], []);
 
-  for(let i = 0; i < 2500; i++) {
+  for(let i = 0; i < 100; i++) {
     const date = new Date().toISOString();
     const idx = getRandomIndex(splitText.length);
     data.push(new Transcription({
