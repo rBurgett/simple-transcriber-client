@@ -4,13 +4,16 @@ import { createStore, combineReducers } from 'redux';
 import { Provider } from 'react-redux';
 import swal from 'sweetalert';
 import uuid from 'uuid';
+import AWS from 'aws-sdk';
+import request from 'superagent';
+import fs from 'fs-extra-promise';
 import appReducer from './reducers/app-reducer';
 import * as appActions from './actions/app-actions';
 import Transcription from './types/transcription';
 import App from './components/app';
-import { localStorageKeys } from './constants';
+import * as constants from './constants';
 
-localStorage.setItem(localStorageKeys.TEMP_OBJ, JSON.stringify({}));
+localStorage.setItem(constants.localStorageKeys.TEMP_OBJ, JSON.stringify({}));
 
 window.handleError = err => {
   console.error(err);
@@ -37,6 +40,91 @@ window.addEventListener('resize', e => {
   store.dispatch(appActions.setWindowSize(innerWidth, innerHeight));
 });
 
+{
+  const { accessKeyId, secretAccessKey } = store.getState().appState;
+  AWS.config.accessKeyId = accessKeyId;
+  AWS.config.secretAccessKey = secretAccessKey;
+  AWS.config.region = constants.aws.REGION;
+}
+
+// Check to see if any transcriptions are finished processing
+setInterval(async function() {
+  try {
+    console.log('Checking statuses');
+    const transcribe = new AWS.TranscribeService();
+    const { transcriptions: originalTranscriptions, uploading } = store.getState().appState;
+    if(uploading) return;
+    const processing = originalTranscriptions
+      .filter(t => t.status === constants.transcriptionStatuses.PROCESSING);
+    for(const transcription of processing) {
+      let newTranscription;
+      try {
+        const data = await new Promise((resolve, reject) => {
+          transcribe.getTranscriptionJob({ TranscriptionJobName: transcription._id }, (err, res) => {
+            if(err) reject(err);
+            else resolve(res);
+          });
+        });
+        if(data.TranscriptionJob.TranscriptionJobStatus === 'COMPLETED') {
+          const { TranscriptFileUri } = data.TranscriptionJob.Transcript;
+          const res = await request.get(TranscriptFileUri).responseType('blob');
+          const json = res.body.toString('utf8');
+          const parsed = JSON.parse(json);
+          const text = parsed.results.transcripts.map(t => t.transcript).join('\n\n');
+          newTranscription = transcription.set({
+            status: constants.transcriptionStatuses.READY,
+            text
+          });
+        } else if(data.TranscriptionJob.TranscriptionJobStatus === 'FAILED') {
+          newTranscription = transcription.set({
+            status: constants.transcriptionStatuses.FAILED
+          });
+        }
+      } catch(err) {
+        handleError(err);
+        newTranscription = transcription.set({
+          status: constants.transcriptionStatuses.FAILED
+        });
+      }
+      if(newTranscription) {
+        const { transcriptions } = store.getState().appState;
+        const idx = transcriptions.findIndex(t => t._id === newTranscription._id);
+        const newTranscriptions = [
+          ...transcriptions.slice(0, idx),
+          newTranscription,
+          ...transcriptions.slice(idx + 1)
+        ];
+        store.dispatch(appActions.setTranscriptions(newTranscriptions));
+
+        {
+          // Delete finished transcription job
+          const params = {
+            TranscriptionJobName: newTranscription._id
+          };
+          transcribe.deleteTranscriptionJob(params, err => {
+            if(err) handleError(err);
+          });
+        }
+
+        {
+          // Delete file from S3 bucket
+          const s3 = new AWS.S3();
+          const params = {
+            Bucket: constants.aws.BUCKET,
+            Key: newTranscription.s3Key
+          };
+          s3.deleteObject(params, err => {
+            if(err) handleError(err);
+          });
+        }
+
+      }
+    }
+  } catch(err) {
+    handleError(err);
+  }
+}, 30000);
+
 setTimeout(() => {
 
   const getRandomIndex = max => {
@@ -60,7 +148,8 @@ setTimeout(() => {
       text,
       audioUrl: 'https://something.com/something.mp3',
       postUrl: 'https://something.com/something',
-      postDate: date
+      postDate: date,
+      status: constants.transcriptionStatuses.READY
     }));
   }
   store.dispatch(appActions.setTranscriptions(data));

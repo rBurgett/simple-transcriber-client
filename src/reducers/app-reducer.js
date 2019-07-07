@@ -6,7 +6,8 @@ const getInitialState = () => ({
   windowHeight: window.innerHeight,
   transcriptions: [],
   accessKeyId: localStorage.getItem(localStorageKeys.ACCESS_KEY_ID) || '',
-  secretAccessKey: localStorage.getItem(localStorageKeys.SECRET_ACCESS_KEY) || ''
+  secretAccessKey: localStorage.getItem(localStorageKeys.SECRET_ACCESS_KEY) || '',
+  uploading: false
 });
 
 export default (state = getInitialState(), { type, payload }) => {
@@ -38,6 +39,11 @@ export default (state = getInitialState(), { type, payload }) => {
       return {
         ...state,
         secretAccessKey: payload.secretAccessKey
+      };
+    case actions.SET_UPLOADING:
+      return {
+        ...state,
+        uploading: payload.uploading
       };
     default:
       return state;

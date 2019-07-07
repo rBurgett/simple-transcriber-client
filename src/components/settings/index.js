@@ -1,4 +1,5 @@
 import { connect } from 'react-redux';
+import AWS from 'aws-sdk';
 import Settings from './settings';
 import * as actions from '../../actions/app-actions';
 
@@ -10,11 +11,15 @@ export default connect(
   dispatch => ({
     onAccessKeyIdChange: e => {
       e.preventDefault();
-      dispatch(actions.setAccessKeyId(e.target.value))
+      const { value } = e.target;
+      dispatch(actions.setAccessKeyId(value));
+      AWS.config.accessKeyId = value;
     },
     onSecretAccessKeyChange: e => {
       e.preventDefault();
-      dispatch(actions.setSecretAccessKey(e.target.value))
+      const { value } = e.target;
+      dispatch(actions.setSecretAccessKey(value));
+      AWS.config.secretAccessKey = value;
     }
   })
 )(Settings);

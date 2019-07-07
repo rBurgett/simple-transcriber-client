@@ -4,19 +4,22 @@ import swal from 'sweetalert';
 import fs from 'fs-extra-promise';
 import path from 'path';
 import { cleanFileName } from '../util';
-import { localStorageKeys } from '../constants';
+import { localStorageKeys, transcriptionStatuses } from '../constants';
 
 const { dialog, BrowserWindow } = remote;
 
 export default class Transcription {
 
   _id = '';
-  createdAt = '';
+  createdAt = new Date().toISOString();
   title = '';
   text = '';
   audioUrl = '';
   postUrl = '';
-  postDate = '';
+  postDate = new Date().toISOString();
+  s3Key = '';
+  s3Url = '';
+  status = transcriptionStatuses.UNKNOWN;
 
   constructor(data) {
     this._id = data._id || this._id;
@@ -26,6 +29,9 @@ export default class Transcription {
     this.audioUrl = data.audioUrl || this.audioUrl;
     this.postUrl = data.postUrl || this.postUrl;
     this.postDate = data.postDate || this.postDate;
+    this.s3Key = data.s3Key || this.s3Key;
+    this.s3Url = data.s3Url || this.s3Url;
+    this.status = data.status || this.status;
   }
 
   set(newData) {

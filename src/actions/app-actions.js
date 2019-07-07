@@ -24,3 +24,8 @@ export const setSecretAccessKey = secretAccessKey => ({
   type: actions.SET_SECRET_ACCESS_KEY,
   payload: { secretAccessKey }
 });
+
+export const setUploading = uploading => ({
+  type: actions.SET_UPLOADING,
+  payload: { uploading }
+});
