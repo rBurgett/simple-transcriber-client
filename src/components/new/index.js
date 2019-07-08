@@ -4,7 +4,8 @@ import New from './new';
 
 export default connect(
   ({ appState }) => ({
-    transcriptions: appState.transcriptions
+    transcriptions: appState.transcriptions,
+    TranscriptionModel: appState.TranscriptionModel
   }),
   dispatch => ({
     setTranscriptions: transcriptions => dispatch(actions.setTranscriptions(transcriptions)),

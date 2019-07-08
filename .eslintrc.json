@@ -53,6 +53,8 @@
   "plugins": [],
   "globals": {
     "$": false,
-    "handleError": true
+    "handleError": true,
+    "TranscriptionModel": true,
+    "db": true
   }
 }

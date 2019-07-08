@@ -125,13 +125,22 @@ const New = ({ transcriptions, setTranscriptions, setUploading }) => {
           title = s3Key;
         }
         const _id = await startTranscription(s3Url);
-        const newTranscription = new Transcription({
+        let newTranscription = new Transcription({
           _id,
           title,
           s3Key,
           s3Url,
           status: constants.transcriptionStatuses.PROCESSING
         });
+        const model = await TranscriptionModel
+          .createAsync(TranscriptionModel.deflate(newTranscription));
+        newTranscription = newTranscription.set({
+          ...newTranscription,
+          ...model.attrs,
+          createdAt: model.get('createdAt').toISOString(),
+          model
+        });
+        console.log('newTranscription', newTranscription);
         newTranscriptions = [
           newTranscription,
           ...newTranscriptions
@@ -154,6 +163,7 @@ const New = ({ transcriptions, setTranscriptions, setUploading }) => {
         { name: 'MP3 Files', extensions: ['mp3'] }
       ]
     }, filePaths => {
+      if(!filePaths) return;
       processFiles(filePaths);
     });
   };

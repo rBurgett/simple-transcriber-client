@@ -12,6 +12,7 @@ export default class Transcription {
 
   _id = '';
   createdAt = new Date().toISOString();
+  updatedAt = '';
   title = '';
   text = '';
   audioUrl = '';
@@ -20,10 +21,12 @@ export default class Transcription {
   s3Key = '';
   s3Url = '';
   status = transcriptionStatuses.UNKNOWN;
+  model = null;
 
   constructor(data) {
     this._id = data._id || this._id;
     this.createdAt = data.createdAt || this.createdAt;
+    this.updatedAt = data.updatedAt || this.updatedAt;
     this.title = data.title || this.title;
     this.text = data.text || this.text;
     this.audioUrl = data.audioUrl || this.audioUrl;
@@ -32,14 +35,16 @@ export default class Transcription {
     this.s3Key = data.s3Key || this.s3Key;
     this.s3Url = data.s3Url || this.s3Url;
     this.status = data.status || this.status;
+    this.model = data.model;
   }
 
   set(newData) {
     return new Transcription({...this, ...newData});
   }
 
-  copyTextToClipboard() {
-    clipboard.writeText(this.text);
+  async copyTextToClipboard() {
+    const text = await this.getText();
+    clipboard.writeText(text);
     swal({
       text: 'Text copied to clipboard.',
       buttons: false,
@@ -49,7 +54,8 @@ export default class Transcription {
     });
   }
 
-  saveTextToFile() {
+  async saveTextToFile() {
+    const text = await this.getText();
     const date = moment(this.postDate).format('YYYY-MM-DD');
     const fileName = `${date}_${cleanFileName(this.title)}.txt`;
     dialog.showSaveDialog(BrowserWindow.getFocusedWindow(), {
@@ -59,7 +65,8 @@ export default class Transcription {
       ]
     }, async function(filePath) {
       try {
-        await fs.writeFileAsync(filePath, this.text, 'utf8');
+        if(!filePath) return;
+        await fs.writeFileAsync(filePath, text, 'utf8');
         swal({
           icon: 'success',
           text: `${fileName} successfully saved.`,
@@ -72,8 +79,9 @@ export default class Transcription {
     });
   }
 
-  openTranscriptionTextWindow() {
+  async openTranscriptionTextWindow() {
 
+    await this.getText();
     const temp = JSON.parse(localStorage.getItem(localStorageKeys.TEMP_OBJ));
     const newTemp = {
       ...temp,
@@ -98,4 +106,12 @@ export default class Transcription {
 
   }
 
+  async getText() {
+    if(!this.text) {
+      const model = await TranscriptionModel
+        .getAsync(this._id);
+      this.text = model.get('text') || '';
+    }
+    return this.text;
+  }
 }

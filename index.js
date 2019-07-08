@@ -64,6 +64,11 @@ app.on('ready', () => {
 
 });
 
+ipcMain.on('restart', () => {
+  app.relaunch();
+  app.quit();
+});
+
 ipcMain.on('getVersion', e => {
   const { version } = fs.readJsonSync(path.join(__dirname, 'package.json'));
   e.returnValue = version;

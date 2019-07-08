@@ -1,12 +1,15 @@
 import { actions, activeTabs, localStorageKeys } from '../constants';
 
+const initialAccessKeyId = localStorage.getItem(localStorageKeys.ACCESS_KEY_ID) || '';
+const initialSecretAccessKey = localStorage.getItem(localStorageKeys.SECRET_ACCESS_KEY) || '';
+
 const getInitialState = () => ({
-  activeTab: activeTabs.NEW,
+  activeTab: (initialAccessKeyId && initialSecretAccessKey) ? activeTabs.NEW : activeTabs.SETTINGS,
   windowWidth: window.innerWidth,
   windowHeight: window.innerHeight,
   transcriptions: [],
-  accessKeyId: localStorage.getItem(localStorageKeys.ACCESS_KEY_ID) || '',
-  secretAccessKey: localStorage.getItem(localStorageKeys.SECRET_ACCESS_KEY) || '',
+  accessKeyId: initialAccessKeyId,
+  secretAccessKey: initialSecretAccessKey,
   uploading: false
 });
 
