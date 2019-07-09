@@ -17,3 +17,22 @@ export const wrapModel = (model, defaultFunc = () => ({})) => {
     inflate: obj => Object.assign({}, defaultFunc(), obj)
   });
 };
+
+export const splitWords = str => {
+  const apostrophePatt = new RegExp(`[${String.fromCharCode(8217)}']`);
+  const split =  str
+    .split('\n')
+    .map(s => s.trim())
+    .join(' ')
+    .split(/\s+/)
+    .filter(s => !apostrophePatt.test(s))
+    .join(' ')
+    .replace(/\W/g, ' ')
+    .split(/\s+/)
+    .map(s => s.trim())
+    .filter(s => s)
+    .filter(s => !/\d/.test(s))
+    .filter(s => s.length > 1)
+    .map(s => s.toLowerCase());
+  return [...new Set(split)];
+};

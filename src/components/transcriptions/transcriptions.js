@@ -2,24 +2,49 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 import { shell } from 'electron';
+import escapeRegExp from 'lodash/escapeRegExp';
 import Transcription from '../../types/transcription';
-import { transcriptionStatuses } from '../../constants';
+import { transcriptionStatuses, filterTypes } from '../../constants';
 
-const Transcriptions = ({ transcriptions, windowHeight }) => {
+const Transcriptions = ({ transcriptions, windowHeight, filter, filterType, appliedFilter, appliedFilterType, setFilter, setFilterType, setAppliedFilter }) => {
 
   const styles = {
     container: {
       width: '100%',
       maxWidth: '100%',
-      height: '100%',
-      maxHeight: '100%'
+      display: 'flex',
+      flexDirection: 'column',
+      flexWrap: 'nowrap',
+      justifyContent: 'flex-start',
+      overflowY: 'hidden',
+      height: windowHeight - 50,
+      maxHeight: windowHeight - 50
     },
     tableContainer: {
-      width: '100%',
-      height: windowHeight - 50
+      flexGrow: 1,
+      width: '100%'
     },
     viewLink: {
       marginRight: 20
+    },
+    filterContainer: {
+      padding: '8px 4px 8px 4px'
+    },
+    filterLabel: {
+      marginRight: 4
+    },
+    filterTermInput: {
+      marginLeft: 4,
+      marginRight: 4,
+      width: 300
+    },
+    filterTypeInput: {
+      marginLeft: 4,
+      marginRight: 4
+    },
+    filterSubmitButton: {
+      marginLeft: 4,
+      marginRight: 4
     }
   };
 
@@ -46,8 +71,50 @@ const Transcriptions = ({ transcriptions, windowHeight }) => {
     transcription.openTranscriptionTextWindow();
   };
 
+  const onFilterChange = e => {
+    e.preventDefault();
+    setFilter(e.target.value);
+  };
+
+  const onFilterTypeChange = e => {
+    e.preventDefault();
+    setFilterType(e.target.value);
+  };
+
+  const onSubmit = e => {
+    e.preventDefault();
+    setAppliedFilter();
+  };
+
+  let filteredTranscriptions;
+
+  if(appliedFilter) {
+    if(appliedFilterType === filterTypes.TITLE) {
+      const patterns = appliedFilter
+        .split(/\s+/)
+        .map(s => s.trim().toLowerCase())
+        .filter(s => s)
+        .map(word => new RegExp('(^|\\W)' + escapeRegExp(word) + '($|\\W)', 'i'));
+      filteredTranscriptions = transcriptions
+        .filter(t => patterns.every(p => p.test(t.title)));
+    } else {
+      filteredTranscriptions = transcriptions;
+    }
+  } else {
+    filteredTranscriptions = transcriptions;
+  }
+
   return (
     <div style={styles.container}>
+      <form className={'form-inline'} style={styles.filterContainer} onSubmit={onSubmit}>
+        {/*<label style={styles.filterLabel}>Filter:</label>*/}
+        <input style={styles.filterTermInput} type={'text'} className={'form-control'} value={filter} onChange={onFilterChange} placeholder={'Enter terms to filter transcriptions'} />
+        <select style={styles.filterTypeSelect} className={'form-control'} value={filterType} onChange={onFilterTypeChange}>
+          <option value={filterTypes.TITLE}>Filter By Transcription Title</option>
+          <option value={filterTypes.CONTENTS}>Filter By Transcription Contents</option>
+        </select>
+        <button style={styles.filterSubmitButton} type={'submit'} className={'btn btn-primary'}>Apply Filter</button>
+      </form>
       <div style={styles.tableContainer} className={'table-responsive'}>
         <table className={'table table-sm table-bordered table-hover'}>
           <thead>
@@ -61,7 +128,7 @@ const Transcriptions = ({ transcriptions, windowHeight }) => {
           </tr>
           </thead>
           <tbody>
-          {transcriptions
+          {filteredTranscriptions
             .map(t => {
               return (
                 <tr key={t._id}>
@@ -83,7 +150,14 @@ const Transcriptions = ({ transcriptions, windowHeight }) => {
 };
 Transcriptions.propTypes = {
   windowHeight: PropTypes.number,
-  transcriptions: PropTypes.arrayOf(PropTypes.instanceOf(Transcription))
+  transcriptions: PropTypes.arrayOf(PropTypes.instanceOf(Transcription)),
+  filter: PropTypes.string,
+  filterType: PropTypes.string,
+  appliedFilter: PropTypes.string,
+  appliedFilterType: PropTypes.string,
+  setFilter: PropTypes.func,
+  setFilterType: PropTypes.func,
+  setAppliedFilter: PropTypes.func
 };
 
 export default Transcriptions;

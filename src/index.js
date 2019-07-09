@@ -13,6 +13,7 @@ import * as appActions from './actions/app-actions';
 import Transcription from './types/transcription';
 import App from './components/app';
 import * as constants from './constants';
+import { splitWords } from './util';
 
 const version = ipcRenderer.sendSync('getVersion');
 
@@ -45,6 +46,8 @@ window.addEventListener('resize', e => {
   store.dispatch(appActions.setWindowSize(innerWidth, innerHeight));
 });
 
+let IndexedWordsModel;
+
 (function() {
   const { accessKeyId = '', secretAccessKey = '' } = store.getState().appState;
   db.AWS.config.update({
@@ -60,6 +63,8 @@ window.addEventListener('resize', e => {
     .default({ db });
   window.db = db;
   window.TranscriptionModel = TranscriptionModel;
+  IndexedWordsModel = require('./models/transcription-indexed-words')
+    .default({ db });
 
   if(!accessKeyId || !secretAccessKey) return;
 
@@ -83,14 +88,13 @@ window.addEventListener('resize', e => {
       const transcriptions = models
         .map(model => new Transcription({...TranscriptionModel.inflate(model.attrs), model}));
       store.dispatch(appActions.setTranscriptions(transcriptions));
+      setTimeout(checkTranscriptions, 0);
     })
     .catch(handleError);
 })();
 
-// Check to see if any transcriptions are finished processing
-setInterval(async function() {
+const checkTranscriptions = async function() {
   try {
-    console.log('Checking statuses');
     const transcribe = new AWS.TranscribeService();
     const { accessKeyId, secretAccessKey, transcriptions: originalTranscriptions, uploading } = store.getState().appState;
     if(!accessKeyId || !secretAccessKey) return;
@@ -130,6 +134,22 @@ setInterval(async function() {
               ...newModel.attrs,
               model: newModel
             });
+            const split = splitWords(text);
+            if(split.length > 1) {
+              const models = await IndexedWordsModel.getItemsAsync(split, {ConsistentRead: true});
+              const wordMap = new Map(models.map(m => [m.get('word'), m]));
+              await Promise.all(split.map(word => {
+                if(wordMap.has(word)) {
+                  const model = wordMap.get(word);
+                  const prevTranscriptions = model.get('transcriptions') || [];
+                  model.set({transcriptions: [...prevTranscriptions, newTranscription._id]});
+                  return model.updateAsync();
+                } else {
+                  return IndexedWordsModel.createAsync({word, transcriptions: [newTranscription._id]});
+                }
+              }));
+            }
+
           } else if(data.TranscriptionJob.TranscriptionJobStatus === 'FAILED') {
             newTranscription = transcription.set({
               status: constants.transcriptionStatuses.FAILED
@@ -179,7 +199,10 @@ setInterval(async function() {
   } catch(err) {
     handleError(err);
   }
-}, 30000);
+};
+
+// Check to see if any transcriptions are finished processing
+setInterval(checkTranscriptions, 30000);
 
 // setTimeout(() => {
 //

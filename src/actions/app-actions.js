@@ -29,3 +29,18 @@ export const setUploading = uploading => ({
   type: actions.SET_UPLOADING,
   payload: { uploading }
 });
+
+export const setFilter = filter => ({
+  type: actions.SET_FILTER,
+  payload: { filter }
+});
+
+export const setFilterType = filterType => ({
+  type: actions.SET_FILTER_TYPE,
+  payload: { filterType }
+});
+
+export const setAppliedFilter = () => ({
+  type: actions.SET_APPLIED_FILTER,
+  payload: {}
+});

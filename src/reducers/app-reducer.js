@@ -1,4 +1,4 @@
-import { actions, activeTabs, localStorageKeys } from '../constants';
+import { actions, activeTabs, localStorageKeys, filterTypes } from '../constants';
 
 const initialAccessKeyId = localStorage.getItem(localStorageKeys.ACCESS_KEY_ID) || '';
 const initialSecretAccessKey = localStorage.getItem(localStorageKeys.SECRET_ACCESS_KEY) || '';
@@ -10,7 +10,11 @@ const getInitialState = () => ({
   transcriptions: [],
   accessKeyId: initialAccessKeyId,
   secretAccessKey: initialSecretAccessKey,
-  uploading: false
+  uploading: false,
+  filter: '',
+  filterType: filterTypes.TITLE,
+  appliedFilter: '',
+  appliedFilterType: ''
 });
 
 export default (state = getInitialState(), { type, payload }) => {
@@ -47,6 +51,22 @@ export default (state = getInitialState(), { type, payload }) => {
       return {
         ...state,
         uploading: payload.uploading
+      };
+    case actions.SET_FILTER:
+      return {
+        ...state,
+        filter: payload.filter
+      };
+    case actions.SET_FILTER_TYPE:
+      return {
+        ...state,
+        filterType: payload.filterType
+      };
+    case actions.SET_APPLIED_FILTER:
+      return {
+        ...state,
+        appliedFilter: state.filter,
+        appliedFilterType: state.filterType
       };
     default:
       return state;

@@ -12,7 +12,7 @@ const Settings = ({ accessKeyId, secretAccessKey, onAccessKeyIdChange, onSecretA
     }
   };
 
-  const onRestartClick = e => {
+  const onSubmit = e => {
     e.preventDefault();
     ipcRenderer.send('restart');
   };
@@ -21,7 +21,7 @@ const Settings = ({ accessKeyId, secretAccessKey, onAccessKeyIdChange, onSecretA
     <div style={styles.container}>
       <div className={'container-fluid'}>
         <div className={'row'}>
-          <div className={'col'}>
+          <form className={'col'} onSubmit={onSubmit}>
             <div className={'form-group'}>
               <label>AWS Access Key ID</label>
               <input type={'text'} className={'form-control'} onChange={onAccessKeyIdChange} value={accessKeyId} />
@@ -31,9 +31,9 @@ const Settings = ({ accessKeyId, secretAccessKey, onAccessKeyIdChange, onSecretA
               <input type={'text'} className={'form-control'} onChange={onSecretAccessKeyChange} value={secretAccessKey} />
             </div>
             <div className={'form-group'}>
-              <button type={'button'} className={'btn btn-primary btn-lg d-block w-100'} onClick={onRestartClick}>Restart to Apply Changes</button>
+              <button type={'submit'} className={'btn btn-primary btn-lg d-block w-100'}>Restart to Apply Changes</button>
             </div>
-          </div>
+          </form>
         </div>
       </div>
     </div>
