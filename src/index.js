@@ -65,6 +65,7 @@ let IndexedWordsModel;
   window.TranscriptionModel = TranscriptionModel;
   IndexedWordsModel = require('./models/transcription-indexed-words')
     .default({ db });
+  window.IndexedWordsModel = IndexedWordsModel;
 
   if(!accessKeyId || !secretAccessKey) return;
 

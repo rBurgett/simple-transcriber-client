@@ -55,6 +55,7 @@
     "$": false,
     "handleError": true,
     "TranscriptionModel": true,
+    "IndexedWordsModel": true,
     "db": true
   }
 }

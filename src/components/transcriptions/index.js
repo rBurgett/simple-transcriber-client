@@ -14,6 +14,6 @@ export default connect(
   dispatch => ({
     setFilter: filter => dispatch(appActions.setFilter(filter)),
     setFilterType: filterType => dispatch(appActions.setFilterType(filterType)),
-    setAppliedFilter: () => dispatch(appActions.setAppliedFilter())
+    setAppliedFilter: filter => dispatch(appActions.setAppliedFilter(filter))
   })
 )(Transcriptions);

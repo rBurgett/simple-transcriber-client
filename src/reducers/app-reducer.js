@@ -65,7 +65,7 @@ export default (state = getInitialState(), { type, payload }) => {
     case actions.SET_APPLIED_FILTER:
       return {
         ...state,
-        appliedFilter: state.filter,
+        appliedFilter: payload.filter || state.filter,
         appliedFilterType: state.filterType
       };
     default:

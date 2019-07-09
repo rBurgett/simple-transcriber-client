@@ -40,7 +40,7 @@ export const setFilterType = filterType => ({
   payload: { filterType }
 });
 
-export const setAppliedFilter = () => ({
+export const setAppliedFilter = filter => ({
   type: actions.SET_APPLIED_FILTER,
-  payload: {}
+  payload: { filter }
 });

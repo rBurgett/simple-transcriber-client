@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import moment from 'moment';
 import { shell } from 'electron';
 import escapeRegExp from 'lodash/escapeRegExp';
+import swal from 'sweetalert';
 import Transcription from '../../types/transcription';
 import { transcriptionStatuses, filterTypes } from '../../constants';
 
@@ -81,9 +82,36 @@ const Transcriptions = ({ transcriptions, windowHeight, filter, filterType, appl
     setFilterType(e.target.value);
   };
 
-  const onSubmit = e => {
-    e.preventDefault();
-    setAppliedFilter();
+  const onSubmit = async function(e) {
+    try {
+      e.preventDefault();
+      if(!filter || filterType === filterTypes.TITLE) {
+        setAppliedFilter();
+        return;
+      }
+      swal({
+        text: 'Scanning transcriptions...',
+        buttons: false,
+        closeOnClickOutside: false,
+        closeOnEsc: false
+      });
+      await new Promise(resolve => setTimeout(resolve, 500));
+      const allWords = filter
+        .split(/\s+/)
+        .map(s => s.trim().toLowerCase())
+        .filter(s => s);
+      const words = [...new Set(allWords)];
+      const models = await IndexedWordsModel
+        .getItemsAsync(words);
+      const allTranscriptions = [...new Set(models.reduce((arr, m) => arr.concat(m.get('transcriptions')), []))];
+      const sets = models.map(m => new Set(m.get('transcriptions')));
+      const filteredTranscriptions = allTranscriptions
+        .filter(t => sets.every(s => s.has(t)));
+      setAppliedFilter(filteredTranscriptions.join(','));
+      swal.close();
+    } catch(err) {
+      handleError(err);
+    }
   };
 
   let filteredTranscriptions;
@@ -98,7 +126,9 @@ const Transcriptions = ({ transcriptions, windowHeight, filter, filterType, appl
       filteredTranscriptions = transcriptions
         .filter(t => patterns.every(p => p.test(t.title)));
     } else {
-      filteredTranscriptions = transcriptions;
+      const items = new Set(appliedFilter.split(','));
+      filteredTranscriptions = transcriptions
+        .filter(t => items.has(t._id));
     }
   } else {
     filteredTranscriptions = transcriptions;
