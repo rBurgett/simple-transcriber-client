@@ -97,7 +97,8 @@
     },
     "mac": {
       "target": [
-        "dmg"
+        "dmg",
+        "zip"
       ],
       "category": "public.app-category.utilities",
       "icon": "./public/images/simple-transcriber.icns",
