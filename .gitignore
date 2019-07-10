@@ -61,5 +61,7 @@ typings/
 .next
 
 .idea
-dist
+/dist
+/dist-native
+/temp
 /public/css

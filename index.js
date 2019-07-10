@@ -2,14 +2,32 @@ const { app, BrowserWindow, ipcMain, Menu } = require('electron');
 const isDev = require('electron-is-dev');
 const fs = require('fs-extra-promise');
 const path = require('path');
-// const { autoUpdater } = require('electron-updater');
+const { autoUpdater } = require('electron-updater');
+
+autoUpdater.autoDownload = false;
+autoUpdater.autoInstallOnAppQuit = true;
 
 const { platform } = process;
 require('electron-context-menu')();
 
+let appWindow;
+
+const unlocked = app.requestSingleInstanceLock();
+
+if(!unlocked) {
+  app.quit();
+}
+
+app.on('second-instance', () => {
+  if(appWindow) {
+    if (appWindow.isMinimized()) appWindow.restore();
+    appWindow.focus();
+  }
+});
+
 app.on('ready', () => {
 
-  const appWindow = new BrowserWindow({
+  appWindow = new BrowserWindow({
     show: false,
     width: 800,
     height: platform === 'win32' ? 620 : platform === 'darwin' ? 600 : 580,
@@ -18,7 +36,7 @@ app.on('ready', () => {
     }
   });
 
-  appWindow.toggleDevTools();
+  // appWindow.toggleDevTools();
 
   appWindow.once('ready-to-show', () => {
     require('electron-context-menu')();
@@ -62,6 +80,21 @@ app.on('ready', () => {
     Menu.setApplicationMenu(appMenu);
   }
 
+  autoUpdater.on('update-available', () => {
+    autoUpdater.downloadUpdate();
+  });
+
+  autoUpdater.on('update-downloaded', ({ version }) => {
+    appWindow.send('notification', `New version ${version} has been downloaded and will automatically install when you restart the application.`);
+  });
+
+  autoUpdater.on('error', error => {
+    appWindow.send('errorNotification', error.message);
+  });
+
+  // Check for updates and automatically install
+  if(!isDev) autoUpdater.checkForUpdatesAndNotify();
+
 });
 
 ipcMain.on('restart', () => {
@@ -78,6 +111,3 @@ ipcMain.on('getVersion', e => {
 app.on('window-all-closed', () => {
   app.quit();
 });
-
-// Check for updates and automatically install
-// if(!isDev) autoUpdater.checkForUpdates();

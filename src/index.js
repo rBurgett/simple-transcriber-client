@@ -15,6 +15,20 @@ import App from './components/app';
 import * as constants from './constants';
 import { splitWords } from './util';
 
+ipcRenderer.on('errorNotification', (e, message) => {
+  swal({
+    icon: 'error',
+    text: message
+  });
+});
+
+ipcRenderer.on('notification', (e, notification) => {
+  swal({
+    icon: 'info',
+    text: notification
+  });
+});
+
 const version = ipcRenderer.sendSync('getVersion');
 
 document.title = document.title + ' v' + version;

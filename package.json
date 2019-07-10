@@ -1,13 +1,16 @@
 {
-  "name": "simple-transcriber-client",
+  "name": "simple-transcriber",
   "version": "0.1.0",
-  "description": "simple-transcriber-client",
+  "description": "simple-transcriber",
   "main": "index.js",
   "private": true,
   "scripts": {
     "start": "electron .",
-    "build": "babel src --out-dir dist --verbose",
+    "build": "npm run scss && babel src --out-dir dist --verbose",
     "watch": "babel src --out-dir dist --watch --verbose",
+    "build-native": "npm run build && node ./native-build-scripts/01-copy-files.js && cd temp && npm install --production && cd .. && electron-builder --dir",
+    "pack-native": "npm run build && node ./native-build-scripts/01-copy-files.js && cd temp && npm install --production && cd .. && electron-builder --publish never",
+    "publish-native": "npm run build && node ./native-build-scripts/01-copy-files.js && cd temp && npm install --production && cd .. && electron-builder --publish always",
     "scss": "npm run css-compile && npm run css-prefix && npm run css-minify",
     "css-compile": "node-sass --output-style expanded --source-map true --source-map-contents true --precision 6 scss/main.scss public/css/main.css",
     "css-prefix": "postcss --replace \"public/css/main.css\"",
@@ -35,35 +38,89 @@
     "bootstrap": "^4.3.1",
     "clean-css-cli": "^4.3.0",
     "electron": "^5.0.6",
-    "electron-context-menu": "^0.13.0",
+    "electron-builder": "^20.44.4",
     "eslint": "^6.0.1",
     "eslint-plugin-babel": "^5.3.0",
     "eslint-plugin-react": "^7.14.2",
-    "jquery": "^3.4.1",
     "less-plugin-autoprefixer": "^2.1.0",
     "node-sass": "^4.12.0",
     "nodemon": "^1.19.1",
     "postcss-cli": "^6.1.2",
-    "react-redux": "^7.1.0",
-    "redux": "^4.0.1"
+    "rmrf-promise": "^1.1.0"
   },
   "dependencies": {
     "@babel/polyfill": "^7.4.4",
     "aws-sdk": "^2.488.0",
     "dynogels": "^9.0.0",
     "dynogels-promisified": "^1.0.4",
+    "electron-context-menu": "^0.13.0",
     "electron-is-dev": "^1.1.0",
     "electron-updater": "^4.0.14",
     "fs-extra-promise": "^1.0.1",
     "joi": "^14.3.1",
+    "jquery": "^3.4.1",
     "lodash": "^4.17.11",
     "moment": "^2.24.0",
     "music-metadata": "^4.2.0",
     "prop-types": "^15.7.2",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
+    "react-redux": "^7.1.0",
+    "redux": "^4.0.1",
     "superagent": "^5.1.0",
     "sweetalert": "^2.1.2",
     "uuid": "^3.3.2"
+  },
+  "build": {
+    "electronVersion": "5.0.6",
+    "appId": "com.antiwar.transcriber",
+    "productName": "Simple Transcriber",
+    "artifactName": "${name}-${version}-${os}.${ext}",
+    "copyright": "Copyright © 2019 by Ryan Burgett",
+    "directories": {
+      "app": "temp",
+      "output": "dist-native"
+    },
+    "files": [
+      "**/public/**/*",
+      "**/dist/**/*",
+      "index.js"
+    ],
+    "win": {
+      "target": "nsis",
+      "verifyUpdateCodeSignature": false,
+      "icon": "./public/images/simple-transcriber.ico",
+      "publish": {
+        "provider": "github",
+        "releaseType": "draft"
+      }
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.utilities",
+      "icon": "./public/images/simple-transcriber.icns",
+      "publish": {
+        "provider": "github",
+        "releaseType": "draft"
+      }
+    },
+    "linux": {
+      "target": [
+        "appImage"
+      ],
+      "icon": "./public/images/linux_icons/",
+      "synopsis": "Copyright © 2019 by Ryan Burgett",
+      "description": "Copyright © 2019 by Ryan Burgett",
+      "category": "Utility",
+      "desktop": {
+        "Name": "Simple Transcriber"
+      },
+      "publish": {
+        "provider": "github",
+        "releaseType": "draft"
+      }
+    }
   }
 }
