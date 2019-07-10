@@ -102,7 +102,7 @@ export default class Transcription {
       appWindow.show();
     });
 
-    appWindow.loadURL('file://' + path.posix.resolve(__dirname, '..', '..', '/public/text.html'));
+    appWindow.loadURL('file://' + path.resolve(__dirname, '..', '..', 'public/text.html'));
 
   }
 
