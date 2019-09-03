@@ -5,6 +5,7 @@ import { activeTabs } from '../constants/';
 import * as actions from '../actions/app-actions';
 import New from './new';
 import Transcriptions from './transcriptions';
+import Vocabulary from './vocabulary';
 import Settings from './settings';
 
 const App = ({ activeTab, windowWidth, windowHeight, setActiveTab }) => {
@@ -48,6 +49,9 @@ const App = ({ activeTab, windowWidth, windowHeight, setActiveTab }) => {
             <a style={styles.tab} className={`nav-link ${activeTab === activeTabs.TRANSCRIPTIONS ? 'active' : ''}`} href="#" onClick={e => onTabClick(e, activeTabs.TRANSCRIPTIONS)}><i className="fas fa-list" /> Transcriptions</a>
           </li>
           <li className="nav-item">
+            <a style={styles.tab} className={`nav-link ${activeTab === activeTabs.VOCABULARY ? 'active' : ''}`} href="#" onClick={e => onTabClick(e, activeTabs.VOCABULARY)}><i className="fas fa-microphone" /> Vocabulary</a>
+          </li>
+          <li className="nav-item">
             <a style={styles.tab} className={`nav-link ${activeTab === activeTabs.SETTINGS ? 'active' : ''}`} href="#" onClick={e => onTabClick(e, activeTabs.SETTINGS)}><i className="fas fa-cog" /> Settings</a>
           </li>
         </ul>
@@ -59,7 +63,10 @@ const App = ({ activeTab, windowWidth, windowHeight, setActiveTab }) => {
           activeTab === activeTabs.TRANSCRIPTIONS ?
             <Transcriptions />
             :
-            <Settings />
+            activeTab === activeTabs.VOCABULARY ?
+              <Vocabulary />
+                :
+                <Settings />
         }
       </div>
     </div>

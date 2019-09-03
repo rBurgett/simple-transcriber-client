@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom';
 import { createStore, combineReducers } from 'redux';
 import { Provider } from 'react-redux';
 import swal from 'sweetalert';
-import uuid from 'uuid';
 import AWS from 'aws-sdk';
 import request from 'superagent';
 import db from 'dynogels-promisified';
@@ -11,6 +10,7 @@ import { ipcRenderer } from 'electron';
 import appReducer from './reducers/app-reducer';
 import * as appActions from './actions/app-actions';
 import Transcription from './types/transcription';
+import VocabularyType from './types/vocabulary-word';
 import App from './components/app';
 import * as constants from './constants';
 import { splitWords } from './util';
@@ -80,8 +80,22 @@ let IndexedWordsModel;
   IndexedWordsModel = require('./models/transcription-indexed-words')
     .default({ db });
   window.IndexedWordsModel = IndexedWordsModel;
+  const VocabularyWordModel = require('./models/vocabulary')
+    .default({ db });
+  window.VocabularyWordModel = VocabularyWordModel;
 
   if(!accessKeyId || !secretAccessKey) return;
+
+  VocabularyWordModel
+    .scan()
+    .loadAll()
+    .execAsync()
+    .then(({ Items: models }) => {
+      const vocabularyWords = models
+        .map(model => new VocabularyType({...model.attrs, model}));
+      store.dispatch(appActions.setVocabulary(vocabularyWords));
+    })
+    .catch(handleError);
 
   TranscriptionModel
     .scan()
@@ -111,6 +125,7 @@ let IndexedWordsModel;
 const checkTranscriptions = async function() {
   try {
     const transcribe = new AWS.TranscribeService();
+    window.transcribeService = transcribe;
     const { accessKeyId, secretAccessKey, transcriptions: originalTranscriptions, uploading } = store.getState().appState;
     if(!accessKeyId || !secretAccessKey) return;
     if(uploading) return;

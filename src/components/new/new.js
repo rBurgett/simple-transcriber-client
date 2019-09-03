@@ -23,6 +23,9 @@ const New = ({ transcriptions, setTranscriptions, setUploading }) => {
         MediaFileUri: s3Url
       },
       MediaFormat: 'mp3',
+      Settings: {
+        VocabularyName: constants.CUSTOM_VOCAB_NAME
+      },
       TranscriptionJobName: transcriptionJobName
     };
     const transcribe = new AWS.TranscribeService();
@@ -114,7 +117,6 @@ const New = ({ transcriptions, setTranscriptions, setUploading }) => {
 
       for(const filePath of filePaths) {
         const { size } = await fs.statAsync(filePath);
-        console.log('size', size);
         const { s3Key, s3Url }  = await uploadFileToS3(filePath, size, true);
         let title;
         try {
@@ -140,7 +142,6 @@ const New = ({ transcriptions, setTranscriptions, setUploading }) => {
           createdAt: model.get('createdAt').toISOString(),
           model
         });
-        console.log('newTranscription', newTranscription);
         newTranscriptions = [
           newTranscription,
           ...newTranscriptions

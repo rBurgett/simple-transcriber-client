@@ -56,6 +56,8 @@
     "handleError": true,
     "TranscriptionModel": true,
     "IndexedWordsModel": true,
+    "VocabularyWordModel": true,
+    "transcribeService": true,
     "db": true
   }
 }

@@ -37,6 +37,7 @@
     "babel-preset-react-app": "^9.0.0",
     "bootstrap": "^4.3.1",
     "clean-css-cli": "^4.3.0",
+    "csv-parse": "^4.4.5",
     "electron": "^5.0.6",
     "electron-builder": "^20.44.4",
     "eslint": "^6.0.1",
@@ -46,7 +47,8 @@
     "node-sass": "^4.12.0",
     "nodemon": "^1.19.1",
     "postcss-cli": "^6.1.2",
-    "rmrf-promise": "^1.1.0"
+    "rmrf-promise": "^1.1.0",
+    "tsv": "^0.2.0"
   },
   "dependencies": {
     "@babel/polyfill": "^7.4.4",
@@ -69,6 +71,7 @@
     "redux": "^4.0.1",
     "superagent": "^5.1.0",
     "sweetalert": "^2.1.2",
+    "utf8-buffer-size": "0.0.4",
     "uuid": "^3.3.2"
   },
   "build": {

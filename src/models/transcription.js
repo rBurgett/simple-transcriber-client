@@ -5,7 +5,7 @@ const TranscriptionModel = ({ db }) => wrapModel(db.define('transcriptions', {
   hashKey: '_id',
   timestamps: true, // adds createdAt and updatedAt String
   schema: {
-    _id: db.types.uuid(),
+    _id: Joi.string(),
     title: Joi.string(),
     text: Joi.string(),
     audioUrl: Joi.string(),

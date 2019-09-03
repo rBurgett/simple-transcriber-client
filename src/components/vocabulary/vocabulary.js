@@ -1,0 +1,209 @@
+import React from 'react';
+import PropTypes from 'prop-types';
+import escapeRegExp from 'lodash/escapeRegExp';
+import bindAll from 'lodash/bindAll';
+import swal from 'sweetalert';
+import bufferSize from 'utf8-buffer-size';
+import $ from 'jquery';
+import VocabularyType from '../../types/vocabulary-word';
+import { CUSTOM_VOCAB_NAME } from '../../constants';
+
+class Vocabulary extends React.Component {
+
+  static propTypes = {
+    windowHeight: PropTypes.number,
+    vocabulary: PropTypes.arrayOf(PropTypes.instanceOf(VocabularyType)),
+    vocabularyFilter: PropTypes.string,
+    appliedVocabularyFilter: PropTypes.string,
+    setVocabularyFilter: PropTypes.func,
+    setAppliedVocabularyFilter: PropTypes.func,
+    setVocabulary: PropTypes.func
+  }
+
+  constructor(props) {
+    super(props);
+    bindAll(this, [
+      'onAddWord'
+    ]);
+  }
+
+  async onAddWord(e) {
+    try {
+      e.preventDefault();
+      const confirmed = await swal({
+        text: 'Enter new custom vocabulary word.',
+        content: {
+          element: 'input',
+          attributes: {
+            type: 'text',
+            id: 'js-newWordInput'
+          }
+        },
+        buttons: [
+          'Cancel',
+          {
+            text: 'Save',
+            closeModal: false
+          }
+        ]
+      });
+      if(!confirmed) return;
+      const value = $('#js-newWordInput')
+        .val()
+        .trim();
+      const { vocabulary } = this.props;
+      if(!value || vocabulary.some(v => new RegExp(escapeRegExp(v.word), 'i').test(value))) {
+        swal.close();
+        return;
+      }
+      const model = await VocabularyWordModel.createAsync({
+        word: value
+      });
+      const newVocabulary = [
+        new VocabularyType({...model.attrs, model}),
+        ...vocabulary
+      ];
+      await new Promise((resolve, reject) => {
+        transcribeService.deleteVocabulary({
+          VocabularyName: CUSTOM_VOCAB_NAME
+        }, err => err ? reject(err) : resolve());
+      });
+      await new Promise((resolve, reject) => {
+        transcribeService.createVocabulary({
+          LanguageCode: 'en-US',
+          VocabularyName: CUSTOM_VOCAB_NAME,
+          Phrases: newVocabulary.map(v => v.word)
+        }, err => err ? reject(err) : resolve());
+      });
+      this.props.setVocabulary(newVocabulary);
+      swal.close();
+    } catch(err) {
+      handleError(err);
+    }
+  }
+
+  render() {
+
+    const { vocabulary, windowHeight, vocabularyFilter, appliedVocabularyFilter, setVocabularyFilter, setAppliedVocabularyFilter } = this.props;
+
+    const styles = {
+      container: {
+        width: '100%',
+        maxWidth: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        flexWrap: 'nowrap',
+        justifyContent: 'flex-start',
+        overflowY: 'hidden',
+        height: windowHeight - 50,
+        maxHeight: windowHeight - 50
+      },
+      tableContainer: {
+        flexGrow: 1,
+        width: '100%'
+      },
+      viewLink: {
+        marginRight: 20
+      },
+      filterContainer: {
+        padding: '8px 4px 8px 4px',
+        position: 'relative'
+      },
+      filterLabel: {
+        marginRight: 4
+      },
+      filterTermInput: {
+        marginLeft: 4,
+        marginRight: 4,
+        width: 400
+      },
+      filterTypeInput: {
+        marginLeft: 4,
+        marginRight: 4
+      },
+      filterSubmitButton: {
+        marginLeft: 4,
+        marginRight: 4
+      }
+    };
+
+    const onFilterChange = e => {
+      e.preventDefault();
+      setVocabularyFilter(e.target.value);
+    };
+
+    const onSubmit = async function(e) {
+      try {
+        e.preventDefault();
+        setAppliedVocabularyFilter();
+      } catch(err) {
+        handleError(err);
+      }
+    };
+
+    let filteredVocabulary;
+
+    if(appliedVocabularyFilter) {
+      const patt = new RegExp(escapeRegExp(appliedVocabularyFilter), 'i');
+      filteredVocabulary = vocabulary
+        .filter(v => patt.test(v.word));
+    } else {
+      filteredVocabulary = vocabulary;
+    }
+
+    // let filteredTranscriptions;
+    //
+    // if(appliedFilter) {
+    //   if(appliedFilterType === filterTypes.TITLE) {
+    //     const patterns = appliedFilter
+    //       .split(/\s+/)
+    //       .map(s => s.trim().toLowerCase())
+    //       .filter(s => s)
+    //       .map(word => new RegExp('(^|\\W)' + escapeRegExp(word) + '($|\\W)', 'i'));
+    //     filteredTranscriptions = transcriptions
+    //       .filter(t => patterns.every(p => p.test(t.title)));
+    //   } else {
+    //     const items = new Set(appliedFilter.split(','));
+    //     filteredTranscriptions = transcriptions
+    //       .filter(t => items.has(t._id));
+    //   }
+    // } else {
+    //   filteredTranscriptions = transcriptions;
+    // }
+
+    const size = bufferSize(vocabulary.join('\n'));
+
+    return (
+      <div style={styles.container}>
+        <form className={'form-inline'} style={styles.filterContainer} onSubmit={onSubmit}>
+          <div style={{position: 'absolute', right: 8, top: 15}}><span style={{display: 'none'}}>{((size / 50000) * 100).toFixed(1)}% Full </span><a style={{marginTop: -7}} href={'#'} className={'btn btn-primary'} onClick={this.onAddWord}><i className={'fas fa-plus'} /> Word</a></div>
+          <input style={styles.filterTermInput} type={'text'} className={'form-control'} value={vocabularyFilter} onChange={onFilterChange} placeholder={'Enter characters/words to filter vocabulary list'} />
+          <button style={styles.filterSubmitButton} type={'submit'} className={'btn btn-primary'}>Apply Filter</button>
+        </form>
+        <div style={styles.tableContainer} className={'table-responsive'}>
+          <table className={'table table-sm table-bordered table-hover'}>
+            <thead>
+            <tr>
+              <th>Title</th>
+            </tr>
+            </thead>
+            <tbody>
+            {filteredVocabulary
+              .map(t => {
+                return (
+                  <tr key={t._id}>
+                    <td>{t.word}</td>
+                  </tr>
+                );
+              })
+            }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
+
+}
+
+export default Vocabulary;

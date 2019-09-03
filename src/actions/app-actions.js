@@ -44,3 +44,18 @@ export const setAppliedFilter = filter => ({
   type: actions.SET_APPLIED_FILTER,
   payload: { filter }
 });
+
+export const setVocabulary = vocabulary => ({
+  type: actions.SET_VOCABULARY,
+  payload: { vocabulary }
+});
+
+export const setVocabularyFilter = vocabularyFilter => ({
+  type: actions.SET_VOCABULARY_FILTER,
+  payload: { vocabularyFilter }
+});
+
+export const setAppliedVocabularyFilter = () => ({
+  type: actions.SET_APPLIED_VOCABULARY_FILTER,
+  payload: {}
+});

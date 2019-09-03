@@ -14,7 +14,10 @@ const getInitialState = () => ({
   filter: '',
   filterType: filterTypes.TITLE,
   appliedFilter: '',
-  appliedFilterType: ''
+  appliedFilterType: '',
+  vocabulary: [],
+  vocabularyFilter: '',
+  appliedVocabularyFilter: ''
 });
 
 export default (state = getInitialState(), { type, payload }) => {
@@ -65,8 +68,23 @@ export default (state = getInitialState(), { type, payload }) => {
     case actions.SET_APPLIED_FILTER:
       return {
         ...state,
-        appliedFilter: payload.filter || state.filter,
+        appliedFilter: payload.filter.trim() || state.filter.trim(),
         appliedFilterType: state.filterType
+      };
+    case actions.SET_VOCABULARY:
+      return {
+        ...state,
+        vocabulary: payload.vocabulary
+      };
+    case actions.SET_VOCABULARY_FILTER:
+      return {
+        ...state,
+        vocabularyFilter: payload.vocabularyFilter
+      };
+    case actions.SET_APPLIED_VOCABULARY_FILTER:
+      return {
+        ...state,
+        appliedVocabularyFilter: state.vocabularyFilter.trim()
       };
     default:
       return state;
