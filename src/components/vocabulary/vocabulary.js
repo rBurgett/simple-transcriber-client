@@ -8,6 +8,69 @@ import $ from 'jquery';
 import VocabularyType from '../../types/vocabulary-word';
 import { CUSTOM_VOCAB_NAME } from '../../constants';
 
+class TableRow extends React.Component {
+
+  static propTypes = {
+    _id: PropTypes.string,
+    word: PropTypes.string,
+    onDelete: PropTypes.func
+  }
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      hovering: false
+    };
+    bindAll(this, [
+      'onMouseOver',
+      'onMouseOut',
+      'onDelete'
+    ]);
+  }
+
+  onMouseOver(e) {
+    e.preventDefault();
+    this.setState({
+      ...this.state,
+      hovering: true
+    });
+  }
+
+  onMouseOut(e) {
+    e.preventDefault();
+    this.setState({
+      ...this.state,
+      hovering: false
+    });
+  }
+
+  onDelete(e) {
+    e.preventDefault();
+    this.props.onDelete(this.props._id);
+  }
+
+  render() {
+    const { word } = this.props;
+    const { hovering } = this.state;
+    const styles = {
+      link: {
+        display: hovering ? 'inline' : 'none'
+      },
+      smallCell: {
+        width: 70,
+        maxWidth: 70
+      }
+    };
+    return (
+      <tr onMouseOver={this.onMouseOver} onMouseOut={this.onMouseOut}>
+        <td>{word}</td>
+        <td style={styles.smallCell}><a href={'#'} style={styles.link} onClick={this.onDelete}><i className={'fas fa-times text-danger'} /></a></td>
+      </tr>
+    );
+  }
+
+}
+
 class Vocabulary extends React.Component {
 
   static propTypes = {
@@ -23,7 +86,8 @@ class Vocabulary extends React.Component {
   constructor(props) {
     super(props);
     bindAll(this, [
-      'onAddWord'
+      'onAddWord',
+      'onDeleteWord'
     ]);
   }
 
@@ -59,9 +123,50 @@ class Vocabulary extends React.Component {
       const model = await VocabularyWordModel.createAsync({
         word: value
       });
+      const intCol = new Intl.Collator('en-US');
       const newVocabulary = [
         new VocabularyType({...model.attrs, model}),
         ...vocabulary
+      ].sort((a, b) => intCol.compare(a.word, b.word));
+      await new Promise((resolve, reject) => {
+        transcribeService.deleteVocabulary({
+          VocabularyName: CUSTOM_VOCAB_NAME
+        }, err => err ? reject(err) : resolve());
+      });
+      await new Promise((resolve, reject) => {
+        transcribeService.createVocabulary({
+          LanguageCode: 'en-US',
+          VocabularyName: CUSTOM_VOCAB_NAME,
+          Phrases: newVocabulary.map(v => v.word)
+        }, err => err ? reject(err) : resolve());
+      });
+      this.props.setVocabulary(newVocabulary);
+      swal.close();
+    } catch(err) {
+      handleError(err);
+    }
+  }
+
+  async onDeleteWord(_id) {
+    try {
+      const { vocabulary } = this.props;
+      const idx = vocabulary.findIndex(w => w._id === _id);
+      const word = vocabulary[idx];
+      const confirmed = await swal({
+        icon: 'warning',
+        text: `Are you sure that you want to remove "${word.word}" from the custom vocabulary list?`,
+        buttons: [
+          'Cancel',
+          {
+            text: 'Save',
+            closeModal: false
+          }
+        ]
+      });
+      if(!confirmed) return;
+      const newVocabulary = [
+        ...vocabulary.slice(0, idx),
+        ...vocabulary.slice(idx + 1)
       ];
       await new Promise((resolve, reject) => {
         transcribeService.deleteVocabulary({
@@ -75,6 +180,7 @@ class Vocabulary extends React.Component {
           Phrases: newVocabulary.map(v => v.word)
         }, err => err ? reject(err) : resolve());
       });
+      await word.model.destroyAsync();
       this.props.setVocabulary(newVocabulary);
       swal.close();
     } catch(err) {
@@ -181,20 +287,17 @@ class Vocabulary extends React.Component {
           <button style={styles.filterSubmitButton} type={'submit'} className={'btn btn-primary'}>Apply Filter</button>
         </form>
         <div style={styles.tableContainer} className={'table-responsive'}>
-          <table className={'table table-sm table-bordered table-hover'}>
+          <table className={'table table-sm table-hover'}>
             <thead>
             <tr>
               <th>Title</th>
+              <th>Delete</th>
             </tr>
             </thead>
             <tbody>
             {filteredVocabulary
               .map(t => {
-                return (
-                  <tr key={t._id}>
-                    <td>{t.word}</td>
-                  </tr>
-                );
+                return <TableRow key={t._id} _id={t._id} word={t.word} onDelete={this.onDeleteWord} />;
               })
             }
             </tbody>

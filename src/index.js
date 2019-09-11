@@ -86,13 +86,15 @@ let IndexedWordsModel;
 
   if(!accessKeyId || !secretAccessKey) return;
 
+  const intCol = new Intl.Collator('en-US');
   VocabularyWordModel
     .scan()
     .loadAll()
     .execAsync()
     .then(({ Items: models }) => {
       const vocabularyWords = models
-        .map(model => new VocabularyType({...model.attrs, model}));
+        .map(model => new VocabularyType({...model.attrs, model}))
+        .sort((a, b) => intCol.compare(a.word, b.word));
       store.dispatch(appActions.setVocabulary(vocabularyWords));
     })
     .catch(handleError);
