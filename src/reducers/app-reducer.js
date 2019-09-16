@@ -68,7 +68,7 @@ export default (state = getInitialState(), { type, payload }) => {
     case actions.SET_APPLIED_FILTER:
       return {
         ...state,
-        appliedFilter: payload.filter.trim() || state.filter.trim(),
+        appliedFilter: payload.filter ? payload.filter.trim() : state.filter.trim(),
         appliedFilterType: state.filterType
       };
     case actions.SET_VOCABULARY:

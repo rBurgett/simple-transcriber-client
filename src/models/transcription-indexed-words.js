@@ -3,14 +3,18 @@ import { wrapModel } from '../util';
 
 const TranscriptionIndexModel = ({ db }) => wrapModel(db.define('transcription-indexed-words', {
   hashKey: 'word',
-  timestamps: true, // adds createdAt and updatedAt String
+  rangeKey: 'transcription',
+  timestamps: false, // adds createdAt and updatedAt String
   schema: {
-    word: Joi.string(),
-    transcriptions: Joi.array().items(Joi.string())
-  }
+    word: Joi.string().required(),
+    transcription: Joi.string().required()
+ },
+  indexes: [
+    {hashKey: 'transcription', rangeKey: 'word', name: 'transcription-word-index', type: 'global'}
+  ]
 }), () => ({
   word: '',
-  transcriptions: []
+  transcription: ''
 }));
 
 export default TranscriptionIndexModel;

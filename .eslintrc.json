@@ -53,11 +53,13 @@
   "plugins": [],
   "globals": {
     "$": false,
+    "db": true,
     "handleError": true,
-    "TranscriptionModel": true,
     "IndexedWordsModel": true,
-    "VocabularyWordModel": true,
+    "startTranscription": true,
     "transcribeService": true,
-    "db": true
+    "TranscriptionModel": true,
+    "uploadFileToS3": true,
+    "VocabularyWordModel": true
   }
 }

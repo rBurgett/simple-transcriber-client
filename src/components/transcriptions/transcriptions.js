@@ -3,11 +3,18 @@ import PropTypes from 'prop-types';
 import moment from 'moment';
 import { shell } from 'electron';
 import escapeRegExp from 'lodash/escapeRegExp';
+import uniq from 'lodash/uniq';
 import swal from 'sweetalert';
+import fs from 'fs-extra-promise';
+import path from 'path';
+import https from 'https';
 import Transcription from '../../types/transcription';
-import { transcriptionStatuses, filterTypes } from '../../constants';
+import {transcriptionStatuses, filterTypes} from '../../constants';
 
-const Transcriptions = ({ transcriptions, windowHeight, filter, filterType, appliedFilter, appliedFilterType, setFilter, setFilterType, setAppliedFilter }) => {
+const tempPath = path.resolve(__dirname, '..', '..', '..', 'temp');
+fs.ensureDirSync(tempPath);
+
+const Transcriptions = ({ transcriptions, windowHeight, filter, filterType, appliedFilter, appliedFilterType, setFilter, setFilterType, setAppliedFilter, setTranscriptions }) => {
 
   const styles = {
     container: {
@@ -52,6 +59,61 @@ const Transcriptions = ({ transcriptions, windowHeight, filter, filterType, appl
   const onLinkClick = (e, link) => {
     e.preventDefault();
     shell.openExternal(link);
+  };
+
+  const onRedoClick = async function(e, _id) {
+    try {
+
+      swal({
+        text: 'Getting file for transcription...',
+        buttons: false,
+        closeOnClickOutside: false,
+        closeOnEsc: false
+      });
+
+      await new Promise(resolve => setTimeout(resolve, 500));
+      const idx = transcriptions.findIndex(t => t._id === _id);
+      const transcription = transcriptions[idx];
+      const { Items: indexedWords } = await IndexedWordsModel
+        .query(transcription._id)
+        .usingIndex('transcription-word-index')
+        .execAsync();
+      await Promise.all(indexedWords.map(m => m.destroyAsync()));
+      const { model } = transcription;
+      const newStatus = transcriptionStatuses.PROCESSING;
+      model.set({
+        status: newStatus
+      });
+
+      const filePath = path.join(tempPath, _id);
+      await new Promise((resolve, reject) => {
+        const fileStream = fs.createWriteStream(filePath);
+        https.get(transcription.audioUrl, res => {
+          res.pipe(fileStream);
+        });
+        fileStream.on('error', reject);
+        fileStream.on('close', resolve);
+      });
+      const stats = await fs.statAsync(filePath);
+      const { s3Url } = await uploadFileToS3(filePath, stats.size);
+
+      await startTranscription(s3Url, _id);
+
+      const newModel = await model.updateAsync();
+      const newTranscription = transcription.set({
+        status: newStatus,
+        model: newModel
+      });
+      const newTranscriptions = [
+        ...transcriptions.slice(0, idx),
+        newTranscription,
+        ...transcriptions.slice(idx + 1)
+      ];
+      setTranscriptions(newTranscriptions);
+      await fs.removeAsync(filePath);
+    } catch(err) {
+      handleError(err);
+    }
   };
 
   const onCopyClick =  (e, _id) => {
@@ -101,10 +163,13 @@ const Transcriptions = ({ transcriptions, windowHeight, filter, filterType, appl
         .map(s => s.trim().toLowerCase())
         .filter(s => s);
       const words = [...new Set(allWords)];
-      const models = await IndexedWordsModel
-        .getItemsAsync(words);
-      const allTranscriptions = [...new Set(models.reduce((arr, m) => arr.concat(m.get('transcriptions')), []))];
-      const sets = models.map(m => new Set(m.get('transcriptions')));
+      const res = await Promise.all(words.map(w => IndexedWordsModel.query(w).execAsync()));
+      const models = res
+        .reduce((arr, a) => {
+          return arr.concat(a.Items);
+        }, []);
+      const allTranscriptions = uniq(models.map(m => m.get('transcription')));
+      const sets = res.map(({ Items }) => new Set(Items.map(m => m.get('transcription'))));
       const filteredTranscriptions = allTranscriptions
         .filter(t => sets.every(s => s.has(t)));
       setAppliedFilter(filteredTranscriptions.join(','));
@@ -155,6 +220,7 @@ const Transcriptions = ({ transcriptions, windowHeight, filter, filterType, appl
             <th>MP3 Link</th>
             <th>Post Link</th>
             <th>Transcription</th>
+            <th>Redo</th>
           </tr>
           </thead>
           <tbody>
@@ -168,7 +234,7 @@ const Transcriptions = ({ transcriptions, windowHeight, filter, filterType, appl
                   {t.audioUrl ? <td className={'text-center'}><a href={'#'} onClick={e => onLinkClick(e, t.audioUrl)} title={'Open MP3 link'}><i className={'fas fa-external-link-alt'} /></a></td> : <td className={'text-center'}>N/A</td>}
                   {t.postUrl ? <td className={'text-center'}><a href={'#'} onClick={e => onLinkClick(e, t.postUrl)} title={'Open post link'}><i className={'fas fa-external-link-alt'} /></a></td> : <td className={'text-center'}>N/A</td>}
                   <td className={'text-center'}><a href={'#'} style={styles.viewLink} title={'View transcription text'} onClick={e => onViewClick(e, t._id)}><i className={'fas fa-search'} /></a><a href={'#'} style={styles.viewLink} title={'Copy transcription text'} onClick={e => onCopyClick(e, t._id)}><i className={'fas fa-copy'} /></a><a href={'#'} title={'Save transcription text'} onClick={e => onSaveClick(e, t._id)}><i className={'fas fa-file-download'} /></a></td>
-                </tr>
+                  <td className={'text-center'}><a style={t.status === transcriptionStatuses.READY && t.audioUrl ? {display: 'inline'} : {display: 'none'}} href={'#'} onClick={e => onRedoClick(e, t._id)} title={'Redo transcription'}><i className={'fas fa-sync-alt'} /></a></td></tr>
               );
             })
           }
@@ -187,7 +253,8 @@ Transcriptions.propTypes = {
   appliedFilterType: PropTypes.string,
   setFilter: PropTypes.func,
   setFilterType: PropTypes.func,
-  setAppliedFilter: PropTypes.func
+  setAppliedFilter: PropTypes.func,
+  setTranscriptions: PropTypes.func
 };
 
 export default Transcriptions;
