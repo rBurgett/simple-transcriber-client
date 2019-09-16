@@ -168,18 +168,7 @@ const checkTranscriptions = async function() {
             });
             const split = splitWords(text);
             if(split.length > 1) {
-              const models = await IndexedWordsModel.getItemsAsync(split, {ConsistentRead: true});
-              const wordMap = new Map(models.map(m => [m.get('word'), m]));
-              await Promise.all(split.map(word => {
-                if(wordMap.has(word)) {
-                  const model = wordMap.get(word);
-                  const prevTranscriptions = model.get('transcriptions') || [];
-                  model.set({transcriptions: [...prevTranscriptions, newTranscription._id]});
-                  return model.updateAsync();
-                } else {
-                  return IndexedWordsModel.createAsync({word, transcriptions: [newTranscription._id]});
-                }
-              }));
+              await Promise.all(split.map(word => IndexedWordsModel.createAsync({ word, transcription: newTranscription._id })));
             }
 
           } else if(data.TranscriptionJob.TranscriptionJobStatus === 'FAILED') {

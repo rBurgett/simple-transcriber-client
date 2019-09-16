@@ -15,8 +15,8 @@ const { dialog, BrowserWindow } = remote;
 
 const New = ({ transcriptions, setTranscriptions, setUploading }) => {
 
-  const startTranscription = async function(s3Url) {
-    const transcriptionJobName = uuid.v4();
+  const startTranscription = async function(s3Url, transcriptionJobName = '') {
+    transcriptionJobName = transcriptionJobName || uuid.v4();
     const params = {
       LanguageCode: 'en-US',
       Media: {
@@ -37,6 +37,7 @@ const New = ({ transcriptions, setTranscriptions, setUploading }) => {
     });
     return transcriptionJobName;
   };
+  window.startTranscription = startTranscription;
 
   const uploadFileToS3 = async function(filePath, fileSize, skipClose = false) {
 
@@ -83,6 +84,7 @@ const New = ({ transcriptions, setTranscriptions, setUploading }) => {
       s3Url: data.Location
     };
   };
+  window.uploadFileToS3 = uploadFileToS3;
 
   const styles = {
     container: {
