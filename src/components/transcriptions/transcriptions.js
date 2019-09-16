@@ -1,3 +1,4 @@
+import { ipcRenderer } from 'electron';
 import React from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
@@ -11,7 +12,7 @@ import https from 'https';
 import Transcription from '../../types/transcription';
 import {transcriptionStatuses, filterTypes} from '../../constants';
 
-const tempPath = path.resolve(__dirname, '..', '..', '..', 'temp');
+const tempPath = path.join(ipcRenderer.sendSync('getDataPath'), 'temp');
 fs.ensureDirSync(tempPath);
 
 const Transcriptions = ({ transcriptions, windowHeight, filter, filterType, appliedFilter, appliedFilterType, setFilter, setFilterType, setAppliedFilter, setTranscriptions }) => {

@@ -107,6 +107,10 @@ ipcMain.on('getVersion', e => {
   e.returnValue = version;
 });
 
+ipcMain.on('getDataPath', e => {
+  e.returnValue = app.getPath('userData');
+});
+
 // Properly close the application
 app.on('window-all-closed', () => {
   app.quit();
