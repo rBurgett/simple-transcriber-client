@@ -59,6 +59,7 @@
     "startTranscription": true,
     "transcribeService": true,
     "TranscriptionModel": true,
+    "updateVocabularyList": true,
     "uploadFileToS3": true,
     "VocabularyWordModel": true
   }

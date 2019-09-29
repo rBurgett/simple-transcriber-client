@@ -52,6 +52,15 @@ const store = createStore(combinedReducers);
 
 store.subscribe(() => {
   const state = store.getState();
+  const { updatingVocabularyList } = state.appState;
+  const updatingMessage = ' (Updating vocabulary list)';
+  const { title } = document;
+  const includesMessage = title.includes(updatingMessage);
+  if(updatingVocabularyList && !includesMessage) {
+    document.title = title + updatingMessage;
+  } else if(!updatingVocabularyList && includesMessage) {
+    document.title = title.replace(updatingMessage, '');
+  }
   console.log('state', state.appState);
 });
 
@@ -120,6 +129,46 @@ let IndexedWordsModel;
         .map(model => new Transcription({...TranscriptionModel.inflate(model.attrs), model}));
       store.dispatch(appActions.setTranscriptions(transcriptions));
       setTimeout(checkTranscriptions, 0);
+      checkTranscriptions()
+        .then(() => {
+
+          const _updateVocabularyList = async function() {
+            const json = localStorage.getItem(constants.localStorageKeys.UPDATED_VOCABULARY_LIST);
+            const list = json ? JSON.parse(json) : [];
+            const { VocabularyState } = await new Promise((resolve, reject) => {
+              transcribeService.getVocabulary({
+                VocabularyName: constants.CUSTOM_VOCAB_NAME
+              }, (err, res) => err ? reject(err) : resolve(res));
+            });
+            if(VocabularyState === 'READY') {
+              store.dispatch(appActions.setUpdatingVocabularyList(false));
+            } else {
+              store.dispatch(appActions.setUpdatingVocabularyList(true));
+              return;
+            }
+            if(list.length === 0) return;
+            await new Promise((resolve, reject) => {
+              transcribeService.updateVocabulary({
+                LanguageCode: 'en-US',
+                VocabularyName: constants.CUSTOM_VOCAB_NAME,
+                Phrases: list
+              }, err => err ? reject(err) : resolve());
+            });
+            localStorage.setItem(constants.localStorageKeys.UPDATED_VOCABULARY_LIST, JSON.stringify([]));
+            store.dispatch(appActions.setUpdatingVocabularyList(true));
+          };
+
+          setInterval(_updateVocabularyList, 30000);
+
+          window.updateVocabularyList = (list = []) => {
+            localStorage.setItem(constants.localStorageKeys.UPDATED_VOCABULARY_LIST, JSON.stringify(list));
+            _updateVocabularyList();
+          };
+
+          _updateVocabularyList();
+
+        })
+        .catch(handleError);
     })
     .catch(handleError);
 })();
@@ -130,6 +179,8 @@ const checkTranscriptions = async function() {
     window.transcribeService = transcribe;
     const { accessKeyId, secretAccessKey, transcriptions: originalTranscriptions, uploading } = store.getState().appState;
     if(!accessKeyId || !secretAccessKey) return;
+
+
     if(uploading) return;
     const processing = originalTranscriptions
       .filter(t => t.status === constants.transcriptionStatuses.PROCESSING)

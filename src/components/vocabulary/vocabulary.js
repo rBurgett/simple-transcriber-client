@@ -6,7 +6,6 @@ import swal from 'sweetalert';
 import bufferSize from 'utf8-buffer-size';
 import $ from 'jquery';
 import VocabularyType from '../../types/vocabulary-word';
-import { CUSTOM_VOCAB_NAME } from '../../constants';
 
 class TableRow extends React.Component {
 
@@ -128,18 +127,7 @@ class Vocabulary extends React.Component {
         new VocabularyType({...model.attrs, model}),
         ...vocabulary
       ].sort((a, b) => intCol.compare(a.word, b.word));
-      await new Promise((resolve, reject) => {
-        transcribeService.deleteVocabulary({
-          VocabularyName: CUSTOM_VOCAB_NAME
-        }, err => err ? reject(err) : resolve());
-      });
-      await new Promise((resolve, reject) => {
-        transcribeService.createVocabulary({
-          LanguageCode: 'en-US',
-          VocabularyName: CUSTOM_VOCAB_NAME,
-          Phrases: newVocabulary.map(v => v.word)
-        }, err => err ? reject(err) : resolve());
-      });
+      updateVocabularyList(newVocabulary.map(v => v.word));
       this.props.setVocabulary(newVocabulary);
       swal.close();
     } catch(err) {
@@ -168,18 +156,7 @@ class Vocabulary extends React.Component {
         ...vocabulary.slice(0, idx),
         ...vocabulary.slice(idx + 1)
       ];
-      await new Promise((resolve, reject) => {
-        transcribeService.deleteVocabulary({
-          VocabularyName: CUSTOM_VOCAB_NAME
-        }, err => err ? reject(err) : resolve());
-      });
-      await new Promise((resolve, reject) => {
-        transcribeService.createVocabulary({
-          LanguageCode: 'en-US',
-          VocabularyName: CUSTOM_VOCAB_NAME,
-          Phrases: newVocabulary.map(v => v.word)
-        }, err => err ? reject(err) : resolve());
-      });
+      updateVocabularyList(newVocabulary.map(v => v.word));
       await word.model.destroyAsync();
       this.props.setVocabulary(newVocabulary);
       swal.close();

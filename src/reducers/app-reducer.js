@@ -17,7 +17,8 @@ const getInitialState = () => ({
   appliedFilterType: '',
   vocabulary: [],
   vocabularyFilter: '',
-  appliedVocabularyFilter: ''
+  appliedVocabularyFilter: '',
+  updatingVocabularyList: false
 });
 
 export default (state = getInitialState(), { type, payload }) => {
@@ -85,6 +86,11 @@ export default (state = getInitialState(), { type, payload }) => {
       return {
         ...state,
         appliedVocabularyFilter: state.vocabularyFilter.trim()
+      };
+    case actions.SET_UPDATING_VOCABULARY_LIST:
+      return {
+        ...state,
+        updatingVocabularyList: payload.updating
       };
     default:
       return state;
