@@ -64,3 +64,8 @@ export const setUpdatingVocabularyList = updating => ({
   type: actions.SET_UPDATING_VOCABULARY_LIST,
   payload: { updating }
 });
+
+export const setSelectedWords = selectedWords => ({
+  type: actions.SET_SELECTED_WORDS,
+  payload: { selectedWords }
+});

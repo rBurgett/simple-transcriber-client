@@ -14,3 +14,9 @@
     opacity: .8;
   }
 }
+
+tr.no-highlight {
+  td::selection {
+    background-color: transparent;
+  }
+}

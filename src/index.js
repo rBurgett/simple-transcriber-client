@@ -1,3 +1,5 @@
+/* eslint require-atomic-updates:0 */
+
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { createStore, combineReducers } from 'redux';
@@ -132,21 +134,29 @@ let IndexedWordsModel;
       checkTranscriptions()
         .then(() => {
 
-          const _updateVocabularyList = async function() {
+          const _updateVocabularyList = async function(list = []) {
             const json = localStorage.getItem(constants.localStorageKeys.UPDATED_VOCABULARY_LIST);
-            const list = json ? JSON.parse(json) : [];
+            const listFromStorage = json ? JSON.parse(json) : [];
             const { VocabularyState } = await new Promise((resolve, reject) => {
               transcribeService.getVocabulary({
                 VocabularyName: constants.CUSTOM_VOCAB_NAME
               }, (err, res) => err ? reject(err) : resolve(res));
             });
-            if(VocabularyState === 'READY') {
-              store.dispatch(appActions.setUpdatingVocabularyList(false));
-            } else {
+            if(VocabularyState === 'PENDING') {
               store.dispatch(appActions.setUpdatingVocabularyList(true));
               return;
+            } else {
+              store.dispatch(appActions.setUpdatingVocabularyList(false));
             }
-            if(list.length === 0) return;
+            if(list.length === 0 && listFromStorage.length === 0 && VocabularyState === 'READY') return;
+            if(list.length === 0) {
+              const { Items: wordModels } = await VocabularyWordModel
+                .scan()
+                .loadAll()
+                .execAsync();
+              list = wordModels
+                .map(m => m.get('word'));
+            }
             await new Promise((resolve, reject) => {
               transcribeService.updateVocabulary({
                 LanguageCode: 'en-US',
@@ -162,7 +172,7 @@ let IndexedWordsModel;
 
           window.updateVocabularyList = (list = []) => {
             localStorage.setItem(constants.localStorageKeys.UPDATED_VOCABULARY_LIST, JSON.stringify(list));
-            _updateVocabularyList();
+            _updateVocabularyList(list);
           };
 
           _updateVocabularyList();

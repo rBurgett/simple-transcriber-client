@@ -1,3 +1,4 @@
+import { Set } from 'immutable';
 import { actions, activeTabs, localStorageKeys, filterTypes } from '../constants';
 
 const initialAccessKeyId = localStorage.getItem(localStorageKeys.ACCESS_KEY_ID) || '';
@@ -18,7 +19,8 @@ const getInitialState = () => ({
   vocabulary: [],
   vocabularyFilter: '',
   appliedVocabularyFilter: '',
-  updatingVocabularyList: false
+  updatingVocabularyList: false,
+  selectedWords: Set()
 });
 
 export default (state = getInitialState(), { type, payload }) => {
@@ -91,6 +93,11 @@ export default (state = getInitialState(), { type, payload }) => {
       return {
         ...state,
         updatingVocabularyList: payload.updating
+      };
+    case actions.SET_SELECTED_WORDS:
+      return {
+        ...state,
+        selectedWords: payload.selectedWords
       };
     default:
       return state;

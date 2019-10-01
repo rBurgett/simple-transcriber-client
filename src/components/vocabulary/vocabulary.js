@@ -5,6 +5,7 @@ import bindAll from 'lodash/bindAll';
 import swal from 'sweetalert';
 import bufferSize from 'utf8-buffer-size';
 import $ from 'jquery';
+import { Set } from 'immutable';
 import VocabularyType from '../../types/vocabulary-word';
 
 class TableRow extends React.Component {
@@ -12,7 +13,9 @@ class TableRow extends React.Component {
   static propTypes = {
     _id: PropTypes.string,
     word: PropTypes.string,
-    onDelete: PropTypes.func
+    selected: PropTypes.bool,
+    onDelete: PropTypes.func,
+    onClick: PropTypes.func
   }
 
   constructor(props) {
@@ -23,8 +26,15 @@ class TableRow extends React.Component {
     bindAll(this, [
       'onMouseOver',
       'onMouseOut',
-      'onDelete'
+      'onDelete',
+      'onClick'
     ]);
+  }
+
+  onClick(e) {
+    const { _id } = this.props;
+    const { ctrlKey, shiftKey } = e;
+    this.props.onClick(_id, ctrlKey, shiftKey);
   }
 
   onMouseOver(e) {
@@ -45,11 +55,12 @@ class TableRow extends React.Component {
 
   onDelete(e) {
     e.preventDefault();
+    e.stopPropagation();
     this.props.onDelete(this.props._id);
   }
 
   render() {
-    const { word } = this.props;
+    const { word, selected } = this.props;
     const { hovering } = this.state;
     const styles = {
       link: {
@@ -61,7 +72,7 @@ class TableRow extends React.Component {
       }
     };
     return (
-      <tr onMouseOver={this.onMouseOver} onMouseOut={this.onMouseOut}>
+      <tr className={'no-highlight'} style={selected ? {backgroundColor: '#aaa'} : {}} onMouseOver={this.onMouseOver} onMouseOut={this.onMouseOut} onClick={this.onClick}>
         <td>{word}</td>
         <td style={styles.smallCell}><a href={'#'} style={styles.link} onClick={this.onDelete}><i className={'fas fa-times text-danger'} /></a></td>
       </tr>
@@ -77,16 +88,20 @@ class Vocabulary extends React.Component {
     vocabulary: PropTypes.arrayOf(PropTypes.instanceOf(VocabularyType)),
     vocabularyFilter: PropTypes.string,
     appliedVocabularyFilter: PropTypes.string,
+    selectedWords: PropTypes.instanceOf(Set),
     setVocabularyFilter: PropTypes.func,
     setAppliedVocabularyFilter: PropTypes.func,
-    setVocabulary: PropTypes.func
+    setVocabulary: PropTypes.func,
+    setSelectedWords: PropTypes.func
   }
 
   constructor(props) {
     super(props);
     bindAll(this, [
       'onAddWord',
-      'onDeleteWord'
+      'onDeleteSelected',
+      'onDeleteWord',
+      'onSelectWord'
     ]);
   }
 
@@ -135,6 +150,42 @@ class Vocabulary extends React.Component {
     }
   }
 
+  async onDeleteSelected(e) {
+    try {
+      e.preventDefault();
+      const { vocabulary, selectedWords } = this.props;
+      const { size } = selectedWords;
+      const confirmed = await swal({
+        icon: 'warning',
+        text: `Are you sure that you want to remove the ${size} selected ${size > 1 ? 'words' : 'word'} from the list?`,
+        buttons: [
+          'Cancel',
+          {
+            text: 'Remove',
+            closeModal: false
+          }
+        ]
+      });
+      if(!confirmed) return;
+      const toRemove = [];
+      const newVocabulary = vocabulary
+        .filter(v => {
+          if(selectedWords.has(v._id)) {
+            toRemove.push(v);
+            return false;
+          }
+          return true;
+        });
+      await Promise.all(toRemove.map(v => v.model.destroyAsync()));
+      updateVocabularyList(newVocabulary.map(v => v.word));
+      this.props.setVocabulary(newVocabulary);
+      this.props.setSelectedWords(Set());
+      swal.close();
+    } catch(err) {
+      handleError(err);
+    }
+  }
+
   async onDeleteWord(_id) {
     try {
       const { vocabulary } = this.props;
@@ -146,7 +197,7 @@ class Vocabulary extends React.Component {
         buttons: [
           'Cancel',
           {
-            text: 'Save',
+            text: 'Remove',
             closeModal: false
           }
         ]
@@ -156,8 +207,8 @@ class Vocabulary extends React.Component {
         ...vocabulary.slice(0, idx),
         ...vocabulary.slice(idx + 1)
       ];
-      updateVocabularyList(newVocabulary.map(v => v.word));
       await word.model.destroyAsync();
+      updateVocabularyList(newVocabulary.map(v => v.word));
       this.props.setVocabulary(newVocabulary);
       swal.close();
     } catch(err) {
@@ -165,9 +216,39 @@ class Vocabulary extends React.Component {
     }
   }
 
+  onSelectWord(_id, ctrlKey, shiftKey) {
+    const { vocabulary, selectedWords } = this.props;
+    const alreadySelected = selectedWords.has(_id);
+    const firstSelected = [...selectedWords][0];
+    let newSelected;
+    if(ctrlKey) {
+      if(alreadySelected) {
+        newSelected = selectedWords.remove(_id);
+      } else {
+        newSelected = selectedWords.add(_id);
+      }
+    } else if(shiftKey && firstSelected) {
+      const firstIdx = vocabulary.findIndex(v => v._id === firstSelected);
+      const lastIdx = vocabulary.findIndex(v => v._id === _id);
+      newSelected = Set();
+      const begin = firstIdx < lastIdx ? firstIdx : lastIdx;
+      const end = firstIdx < lastIdx ? lastIdx : firstIdx;
+      for(let i = begin; i < end + 1; i++) {
+        newSelected = newSelected.add(vocabulary[i]._id);
+      }
+    } else {
+      if(alreadySelected) {
+        newSelected = Set();
+      } else {
+        newSelected = Set([_id]);
+      }
+    }
+    this.props.setSelectedWords(newSelected);
+  }
+
   render() {
 
-    const { vocabulary, windowHeight, vocabularyFilter, appliedVocabularyFilter, setVocabularyFilter, setAppliedVocabularyFilter } = this.props;
+    const { vocabulary, selectedWords, windowHeight, vocabularyFilter, appliedVocabularyFilter, setVocabularyFilter, setAppliedVocabularyFilter } = this.props;
 
     const styles = {
       container: {
@@ -207,6 +288,11 @@ class Vocabulary extends React.Component {
       filterSubmitButton: {
         marginLeft: 4,
         marginRight: 4
+      },
+      deletedSelectedButton: {
+        display: selectedWords.size > 0 ? 'inline-block' : 'none',
+        marginTop: -7,
+        marginLeft: 10
       }
     };
 
@@ -259,7 +345,7 @@ class Vocabulary extends React.Component {
     return (
       <div style={styles.container}>
         <form className={'form-inline'} style={styles.filterContainer} onSubmit={onSubmit}>
-          <div style={{position: 'absolute', right: 8, top: 15}}><span style={{display: 'none'}}>{((size / 50000) * 100).toFixed(1)}% Full </span><a style={{marginTop: -7}} href={'#'} className={'btn btn-primary'} onClick={this.onAddWord}><i className={'fas fa-plus'} /> Word</a></div>
+          <div style={{position: 'absolute', right: 8, top: 15}}><span style={{display: 'none'}}>{((size / 50000) * 100).toFixed(1)}% Full </span><a style={{marginTop: -7}} href={'#'} className={'btn btn-primary'} onClick={this.onAddWord}><i className={'fas fa-plus'} /> Word</a><a style={styles.deletedSelectedButton} href={'#'} className={'btn btn-danger'} onClick={this.onDeleteSelected}>Delete Selected</a></div>
           <input style={styles.filterTermInput} type={'text'} className={'form-control'} value={vocabularyFilter} onChange={onFilterChange} placeholder={'Enter characters/words to filter vocabulary list'} />
           <button style={styles.filterSubmitButton} type={'submit'} className={'btn btn-primary'}>Apply Filter</button>
         </form>
@@ -274,7 +360,7 @@ class Vocabulary extends React.Component {
             <tbody>
             {filteredVocabulary
               .map(t => {
-                return <TableRow key={t._id} _id={t._id} word={t.word} onDelete={this.onDeleteWord} />;
+                return <TableRow key={t._id} _id={t._id} word={t.word} selected={selectedWords.has(t._id)} onDelete={this.onDeleteWord} onClick={this.onSelectWord} />;
               })
             }
             </tbody>

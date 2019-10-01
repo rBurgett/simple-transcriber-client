@@ -8,11 +8,13 @@ export default connect(
     transcriptions: appState.transcriptions,
     vocabulary: appState.vocabulary,
     vocabularyFilter: appState.vocabularyFilter,
-    appliedVocabularyFilter: appState.appliedVocabularyFilter
+    appliedVocabularyFilter: appState.appliedVocabularyFilter,
+    selectedWords: appState.selectedWords
   }),
   dispatch => ({
     setVocabularyFilter: vocabularyFilter => dispatch(appActions.setVocabularyFilter(vocabularyFilter)),
     setAppliedVocabularyFilter: () => dispatch(appActions.setAppliedVocabularyFilter()),
-    setVocabulary: vocabulary => dispatch(appActions.setVocabulary(vocabulary))
+    setVocabulary: vocabulary => dispatch(appActions.setVocabulary(vocabulary)),
+    setSelectedWords: selectedWords => dispatch(appActions.setSelectedWords(selectedWords))
   })
 )(Vocabulary);
