@@ -61,7 +61,7 @@
     "fs-extra-promise": "^1.0.1",
     "immutable": "^4.0.0-rc.12",
     "joi": "^14.3.1",
-    "jquery": "^3.4.1",
+    "jquery": "^3.5.0",
     "lodash": "^4.17.11",
     "moment": "^2.24.0",
     "music-metadata": "^4.2.0",
