@@ -52,7 +52,7 @@
   },
   "dependencies": {
     "@babel/polyfill": "^7.4.4",
-    "aws-sdk": "^2.488.0",
+    "aws-sdk": "^2.814.0",
     "dynogels": "^9.0.0",
     "dynogels-promisified": "^1.0.4",
     "electron-context-menu": "^0.13.0",
